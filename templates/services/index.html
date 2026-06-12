@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Services & Pricing | Good Hair Daye{% endblock %}
+{% block nav_services %}active{% endblock %}
+
+{% block content %}
+
+<!-- ══ PAGE HEADER ═══════════════════════════════════════════════ -->
+<section class="section-py-sm text-center" style="background-color: var(--color-cream);">
+  <div class="container-site">
+    <p class="text-label mb-3" style="color: var(--color-brown);">The Menu</p>
+    <h1 class="text-heading-xl mb-3">Services & Pricing</h1>
+    <p class="text-body max-w-md mx-auto">Click any service to view details, duration, and pricing.</p>
+  </div>
+</section>
+
+<!-- ══ SERVICE LIST ══════════════════════════════════════════════ -->
+<section class="section-py" style="background-color: var(--color-white);">
+  <div class="container-site" style="max-width: 860px;">
+
+    {% for category in categories %}
+    <div class="mb-10">
+      <p class="mb-5" style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.75rem;">{{ category }}</p>
+
+      <div class="flex flex-col">
+        {% for service in services %}{% if service.category == category %}
+        <button class="service-row" onclick="openModal(this)"
+          data-id="{{ service.id }}"
+          data-name="{{ service.name }}"
+          data-category="{{ service.category }}"
+          data-price="{{ service.price }}"
+          data-duration="{{ service.duration }}"
+          data-description="{{ service.description }}"
+          data-is-addon="{% if service.is_addon %}true{% else %}false{% endif %}">
+          <span class="service-row-name">
+            {{ service.name }}
+            {% if service.is_addon %}<span class="service-addon-tag">Add-On</span>{% endif %}
+          </span>
+          <span class="service-row-meta">
+            <span class="service-row-duration">{{ service.duration }}</span>
+            <span class="service-row-price">{{ service.price }}</span>
+            <span class="service-row-arrow">→</span>
+          </span>
+        </button>
+        {% endif %}{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</section>
+
+<!-- ══ MODAL ═════════════════════════════════════════════════════ -->
+<div id="service-modal-overlay" onclick="closeModal()" style="display:none;">
+  <div id="service-modal" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <p id="modal-category" class="text-label mb-2" style="color: var(--color-brown);"></p>
+    <h2 id="modal-name" class="text-heading-lg mb-6"></h2>
+
+    <p id="modal-description" class="text-body mb-8"></p>
+
+    <div class="modal-meta-row">
+      <div class="modal-meta-item">
+        <span class="text-label" style="font-size: 0.62rem; color: var(--color-brown);">Estimated Duration</span>
+        <span id="modal-duration" class="modal-meta-value"></span>
+      </div>
+      <div class="modal-meta-divider"></div>
+      <div class="modal-meta-item">
+        <span class="text-label" style="font-size: 0.62rem; color: var(--color-brown);">Price</span>
+        <span id="modal-price" class="modal-meta-value"></span>
+      </div>
+    </div>
+
+    <div id="modal-book-area" class="mt-8"></div>
+    <a id="modal-gallery-btn" href="{% url 'pages:gallery' %}" class="btn btn-secondary w-full mt-3" style="justify-content: center; font-size: 0.65rem; padding: 0.6rem 1.5rem;">View This Style in the Gallery</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+  /* ── Service rows ─────────────────────────────────── */
+  .service-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--color-tan);
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background-color 0.18s ease, padding-left 0.18s ease;
+  }
+  .service-row:hover {
+    background-color: var(--color-cream);
+    padding-left: 1rem;
+  }
+  .service-row-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--color-dark);
+  }
+  .service-row-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+  }
+  .service-row-duration {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    color: var(--color-mid);
+    letter-spacing: 0.06em;
+  }
+  .service-addon-tag {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-brown);
+    border: 1px solid var(--color-tan);
+    padding: 1px 6px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .service-row-price {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-dark);
+    min-width: 80px;
+    text-align: right;
+  }
+  .service-row-arrow {
+    font-size: 0.85rem;
+    color: var(--color-brown);
+    transition: transform 0.18s ease;
+  }
+  .service-row:hover .service-row-arrow { transform: translateX(4px); }
+
+  /* ── Modal overlay ────────────────────────────────── */
+  #service-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(44, 33, 24, 0.45);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ── Modal card ───────────────────────────────────── */
+  #service-modal {
+    background-color: var(--color-white);
+    max-width: 560px;
+    width: 100%;
+    padding: 3rem;
+    position: relative;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-close {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    color: var(--color-mid);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    transition: color 0.2s ease;
+  }
+  .modal-close:hover { color: var(--color-dark); }
+
+  /* ── Modal meta row ───────────────────────────────── */
+  .modal-meta-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    border: 1px solid var(--color-tan);
+  }
+  .modal-meta-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1.25rem 1.5rem;
+  }
+  .modal-meta-divider {
+    width: 1px;
+    background-color: var(--color-tan);
+  }
+  .modal-meta-value {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    color: var(--color-dark);
+  }
+</style>
+
+<script>
+  function openModal(btn) {
+    document.getElementById('modal-name').textContent         = btn.dataset.name;
+    document.getElementById('modal-category').textContent    = btn.dataset.category;
+    document.getElementById('modal-description').textContent = btn.dataset.description;
+    document.getElementById('modal-duration').textContent    = btn.dataset.duration;
+    document.getElementById('modal-price').textContent       = btn.dataset.price;
+
+    const isAddon = btn.dataset.isAddon === 'true';
+    const bookArea = document.getElementById('modal-book-area');
+    const serviceId = btn.dataset.id || '';
+
+    if (isAddon) {
+      bookArea.innerHTML = `
+        <div style="background:#F5F0E8;border:1px solid #D9CEBF;padding:14px 18px;text-align:center;">
+          <p style="margin:0;font-family:var(--font-sans);font-size:0.8rem;color:var(--color-mid);line-height:1.6;">
+            This is an <strong>add-on service</strong>. Please mention it in the notes when booking your main service, or <a href="mailto:Goodhair.daye@yahoo.com" style="color:var(--color-brown);">contact us</a> to add it to an existing appointment.
+          </p>
+        </div>`;
+    } else {
+      bookArea.innerHTML = `
+        <a href="/book/" class="btn btn-primary w-full" style="justify-content:center;"
+           id="modal-book-btn"
+           data-service-id="${serviceId}"
+           onclick="event.preventDefault(); closeModal(); Booking.open(this.dataset.serviceId);">
+          Book This Service
+        </a>`;
+    }
+
+    document.getElementById('modal-gallery-btn').style.display = isAddon ? 'none' : '';
+
+    document.getElementById('service-modal-overlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('service-modal-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+{% endblock %}

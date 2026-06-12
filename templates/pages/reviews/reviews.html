@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Client Reviews | Good Hair Daye{% endblock %}
+
+{% block content %}
+<section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
+  <div class="container-site">
+    <div class="text-center mb-14">
+      <p class="text-label mb-4" style="color: var(--color-brown);">Kind Words</p>
+      <h1 class="text-heading-xl">Client Reviews</h1>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {% for review in reviews %}
+      <div class="review-card">
+        <p class="review-stars">★★★★★</p>
+        <p class="review-quote">"{{ review.quote }}"</p>
+        <p class="review-author">— {{ review.author }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

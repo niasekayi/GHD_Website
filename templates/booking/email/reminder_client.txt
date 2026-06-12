@@ -1,0 +1,20 @@
+GOOD HAIR DAYE — APPOINTMENT REMINDER
+======================================
+
+Hi {{ first_name }}, your appointment is TOMORROW!
+
+  Service:  {{ service_name }}
+  Date:     {{ date }}
+  Time:     {{ time }}
+
+LOCATION
+Good Hair Daye
+470 L'Enfant Plaza Center, Unit 429
+Washington, D.C. 20024
+
+Need to reschedule? Please contact us at least 48 hours before your
+appointment. Cancellations within 48 hours forfeit your deposit.
+
+Email {{ salon_email }}
+
+— Good Hair Daye

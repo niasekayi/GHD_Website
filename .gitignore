@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Django
+*.sqlite3
+*.log
+local_settings.py
+/static/CACHE/
+media/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (Tailwind build)
+node_modules/
+npm-debug.log*
+
+# Build
+dist/
+build/
+*.egg-info/

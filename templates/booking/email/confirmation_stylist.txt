@@ -1,0 +1,17 @@
+NEW BOOKING — GOOD HAIR DAYE
+============================
+
+{{ service_name }}
+{{ date }} at {{ time }}
+
+CLIENT
+  Name:     {{ appointment.client_name }}
+  Phone:    {{ appointment.client_phone }}
+  Email:    {{ appointment.client_email }}
+  Type:     {% if appointment.is_new_client %}New Client{% else %}Returning Client{% endif %}
+  Deposit:  ${{ total_deposit }}{% if appointment.same_day_fee_applied %} (includes same-day fee){% endif %}
+{% if appointment.notes %}
+  Notes:    {{ appointment.notes }}
+{% endif %}
+
+— Good Hair Daye Booking System

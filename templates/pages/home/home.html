@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Good Hair Daye | Washington, D.C. Hair Salon & Extensions{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+
+<!-- ══ HERO ═══════════════════════════════════════════════════════ -->
+<section class="relative flex items-center justify-center text-center"
+         style="background-color: #FAF8F5; min-height: 80vh;">
+  <div class="container-site relative z-10 py-14 flex flex-col items-center gap-5">
+
+    <img src="{% static 'images/logo.png' %}" alt="Good Hair Daye"
+         style="width: 100%; max-width: 340px; height: auto;" />
+
+    <p class="text-label" style="color: var(--color-brown); letter-spacing: 0.2em;">
+      Washington, D.C. Hair Salon & Extensions
+    </p>
+
+    <div class="flex flex-wrap justify-center gap-4 mt-2">
+      <a href="{% url 'booking:index' %}" class="btn btn-primary" style="min-width: 260px;" onclick="event.preventDefault(); Booking.open();">Book an Appointment</a>
+      <a href="{% url 'shop:index' %}"    class="btn btn-secondary" style="min-width: 260px;">Shop Extensions</a>
+    </div>
+
+  </div>
+</section>
+<!-- ══ END HERO ════════════════════════════════════════════════════ -->
+
+
+<!-- ══ ABOUT ══════════════════════════════════════════════════════ -->
+<section class="section-py-sm" style="background-color: var(--color-white);">
+  <div class="container-site max-w-5xl mx-auto text-center">
+    <h2 class="text-heading-lg mb-3">Welcome to Good Hair Daye</h2>
+    <p class="text-slogan mb-5" style="font-size: 1.1rem;">good hair dayes await</p>
+    <p class="text-body">
+      Good Hair Daye Salon and Extension Bar is a quaint boutique salon tucked away inside L'Enfant Plaza. I specialize in healthy hair, silk presses, and multiple methods of extension installation. With a Paul Mitchell The School Houston education, I bring over 15 years of industry experience and extensive product knowledge for all hair textures. The Extension Bar offers extensions ranging from 12" to 26" that can be matched to any texture from 1A to 4C and custom-colored to blend seamlessly with your natural tresses. Visit the gallery to explore more looks, or stop by the shop to purchase new bundles that are guaranteed to last longer than any you've ever had!
+    </p>
+  </div>
+</section>
+<!-- ══ END ABOUT ═══════════════════════════════════════════════════ -->
+
+
+<!-- ══ DUAL CTA SPLIT ══════════════════════════════════════════════ -->
+<section class="grid grid-cols-1 md:grid-cols-2">
+
+  <!-- Book Appointment -->
+  <div class="flex flex-col md:flex-row" style="background-color: var(--color-header); min-height: 480px;">
+    <div class="flex flex-col justify-center px-10 md:px-14 py-12" style="width: 50%;">
+      <p class="text-label mb-3" style="color: var(--color-brown);">Salon Services</p>
+      <h2 class="text-heading-lg mb-6" style="color: var(--color-dark);">Book Your Appointment</h2>
+      <a href="{% url 'booking:index' %}" class="btn btn-primary w-fit" onclick="event.preventDefault(); Booking.open();">Book Now</a>
+    </div>
+    <div class="overflow-hidden" style="width: 50%; min-height: 300px;">
+      <img src="{% static 'pages/home/images/book_photo.jpg' %}" alt="Salon service"
+           style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+    </div>
+  </div>
+
+  <!-- Shop Extensions -->
+  <div class="flex flex-col md:flex-row" style="background-color: var(--color-warm-beige); min-height: 480px;">
+    <div class="flex flex-col justify-center px-10 md:px-14 py-12" style="width: 50%;">
+      <p class="text-label mb-3" style="color: var(--color-brown);">Extensions Boutique</p>
+      <h2 class="text-heading-lg mb-6" style="color: var(--color-dark);">Shop Premium Extensions</h2>
+      <a href="{% url 'shop:index' %}" class="btn btn-primary w-fit">Shop Now</a>
+    </div>
+    <div class="overflow-hidden" style="width: 50%; min-height: 300px;">
+      <img src="{% static 'pages/home/images/shop_photo.jpg' %}" alt="Hair extensions"
+           style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+    </div>
+  </div>
+
+</section>
+<!-- ══ END SPLIT ═══════════════════════════════════════════════════ -->
+
+
+<!-- ══ CLIENT LOVE ════════════════════════════════════════════════ -->
+<section class="section-py" style="background-color: var(--color-white);">
+  <div class="container-site">
+
+    <div class="text-center mb-12">
+      <h2 class="text-heading-xl">Client Love</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {% for review in reviews %}
+      <div class="review-card">
+        <p class="review-stars">★★★★★</p>
+        <p class="review-quote">"{{ review.quote }}"</p>
+        <p class="review-author">— {{ review.author }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="text-center mt-10">
+      <a href="{% url 'pages:reviews' %}" class="btn btn-secondary">See All Reviews</a>
+    </div>
+
+  </div>
+</section>
+<!-- ══ END CLIENT LOVE ════════════════════════════════════════════ -->
+
+
+<!-- ══ VISIT THE SALON ════════════════════════════════════════════ -->
+<section class="section-py" style="background-color: var(--color-cream);">
+  <div class="container-site">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+
+      <div class="flex flex-col gap-5">
+        <p class="text-label" style="color: var(--color-brown);">Find the Salon</p>
+        <h2 class="text-heading-xl">Visit the Salon</h2>
+        <address class="not-italic flex flex-col gap-1 text-body">
+          <span style="font-size:1.05rem; color: var(--color-dark);">470 L'Enfant Plaza Center</span>
+          <span>Unit 429</span>
+          <span>Washington, D.C. 20024</span>
+        </address>
+        <div class="flex flex-col gap-2 mt-2">
+          <p class="text-label" style="font-size: 0.65rem;">Hours</p>
+          <p class="text-body text-sm">By appointment only</p>
+        </div>
+        <a href="https://maps.google.com/?q=470+L%27Enfant+Plaza+Center+Washington+DC+20024"
+           target="_blank" rel="noopener noreferrer"
+           class="btn btn-primary w-fit mt-2">Get Directions</a>
+      </div>
+
+      <div class="rounded overflow-hidden shadow-sm" style="height: 400px;">
+        <iframe
+          title="Good Hair Daye location"
+          width="100%" height="100%"
+          style="border:0; display:block;"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3105.6!2d-77.0224!3d38.8839!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89b7b79e6c4b44c7%3A0x1!2s470+L'Enfant+Plaza+SW%2C+Washington%2C+DC+20024!5e0!3m2!1sen!2sus!4v1">
+        </iframe>
+      </div>
+
+    </div>
+  </div>
+</section>
+<!-- ══ END VISIT THE SALON ════════════════════════════════════════ -->
+
+
+<!-- ══ JOIN THE COMMUNITY ═════════════════════════════════════════ -->
+<section class="section-py" style="background-color: var(--color-white);">
+  <div class="container-site max-w-xl mx-auto text-center">
+
+    <p class="text-label mb-4" style="color: var(--color-brown);">Stay Connected</p>
+    <h2 class="text-heading-xl mb-3">Join the Community</h2>
+    <p class="text-body mb-10 max-w-md mx-auto">
+      Sign up to receive updates, exclusive offers, and hair inspiration directly to your inbox.
+    </p>
+
+    {% if success %}
+    <p class="form-success">Thank you for joining! We'll be in touch soon. ✦</p>
+    {% else %}
+    <form method="POST" action="{% url 'pages:home' %}#join-the-community" id="join-the-community">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-left">
+        <div class="form-field">
+          <label class="form-label" for="{{ form.first_name.id_for_label }}">First Name</label>
+          {{ form.first_name }}
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="{{ form.last_name.id_for_label }}">Last Name</label>
+          {{ form.last_name }}
+        </div>
+      </div>
+      <div class="form-field text-left mb-6">
+        <label class="form-label" for="{{ form.email.id_for_label }}">Email Address</label>
+        {{ form.email }}
+      </div>
+      <button type="submit" class="btn btn-primary w-full">Join the Community</button>
+    </form>
+    {% endif %}
+
+  </div>
+</section>
+<!-- ══ END COMMUNITY ══════════════════════════════════════════════ -->
+
+
+<!-- ══ FOLLOW THE JOURNEY ═════════════════════════════════════════ -->
+<section class="py-10 text-center" style="background-color: var(--color-warm-beige);">
+  <div class="container-site">
+    <p class="text-label mb-2" style="color: var(--color-brown);">Follow the Journey</p>
+    <h2 class="text-heading-lg mb-6" style="color: var(--color-dark);">@goodhairdaye_dc</h2>
+    <a href="https://instagram.com/goodhairdaye_dc" target="_blank" rel="noopener noreferrer"
+       class="btn btn-secondary">Follow on Instagram</a>
+  </div>
+</section>
+<!-- ══ END FOLLOW THE JOURNEY ════════════════════════════════════ -->
+
+
+<!-- ══ BRAND MARQUEE ═══════════════════════════════════════════════ -->
+<section class="py-8 overflow-hidden" style="background-color: var(--color-white); border-top: 1px solid var(--color-tan); border-bottom: 1px solid var(--color-tan);">
+  <div class="relative flex overflow-hidden">
+    <div class="marquee-track">
+      {% for brand in brands %}
+      <span class="marquee-item">
+        <div class="brand-logo-wrap">
+          <img src="{% static brand.logo %}" alt="{{ brand.name }}"
+               class="{% if brand.invert %}brand-logo-invert{% else %}brand-logo{% endif %}"
+               style="height: {{ brand.height }}px; width: auto;" />
+        </div>
+      </span>
+      {% endfor %}
+      {% for brand in brands %}
+      <span class="marquee-item">
+        <div class="brand-logo-wrap">
+          <img src="{% static brand.logo %}" alt="{{ brand.name }}"
+               class="{% if brand.invert %}brand-logo-invert{% else %}brand-logo{% endif %}"
+               style="height: {{ brand.height }}px; width: auto;" />
+        </div>
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+<!-- ══ END MARQUEE ═════════════════════════════════════════════════ -->
+
+{% endblock %}

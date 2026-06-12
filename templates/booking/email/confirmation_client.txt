@@ -1,0 +1,29 @@
+GOOD HAIR DAYE — APPOINTMENT CONFIRMED
+=======================================
+
+Hi {{ first_name }},
+
+Your appointment at Good Hair Daye is confirmed!
+
+  Service:  {{ service_name }}
+  Date:     {{ date }}
+  Time:     {{ time }}
+  Deposit:  ${{ total_deposit }}
+
+PAYMENT REQUIRED WITHIN 24 HOURS
+Please send ${{ total_deposit }} via Venmo, CashApp, or Zelle to confirm your
+spot. Your appointment is not guaranteed until the deposit is received.
+
+LOCATION
+Good Hair Daye
+470 L'Enfant Plaza Center, Unit 429
+Washington, D.C. 20024
+
+CANCELLATION POLICY
+At least 48 hours notice is required to cancel or reschedule.
+Cancellations within 48 hours forfeit the deposit.
+No-shows will be charged the full service price.
+
+Questions? Email {{ salon_email }}
+
+— Good Hair Daye

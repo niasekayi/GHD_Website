@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointment Confirmed — Good Hair Daye</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0E8;font-family:Georgia,serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F0E8;">
+  <tr><td align="center" style="padding:40px 20px;">
+
+    <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background-color:#FFFFFF;border:1px solid #D9CEBF;">
+
+      <!-- Header -->
+      <tr>
+        <td style="background-color:#2C1A0E;padding:32px 40px;text-align:center;">
+          <p style="margin:0;color:#E4D8CC;font-family:Georgia,serif;font-size:1.3rem;font-weight:400;letter-spacing:0.14em;">GOOD HAIR DAYE</p>
+          <p style="margin:8px 0 0;color:#C8A882;font-family:Arial,sans-serif;font-size:0.7rem;letter-spacing:0.18em;">WASHINGTON, D.C.</p>
+        </td>
+      </tr>
+
+      <!-- Confirmed banner -->
+      <tr>
+        <td style="background-color:#EDE6DA;padding:24px 40px;text-align:center;border-bottom:1px solid #D9CEBF;">
+          <p style="margin:0 0 6px;color:#8B5E3C;font-family:Arial,sans-serif;font-size:0.65rem;letter-spacing:0.18em;text-transform:uppercase;">Appointment Confirmed</p>
+          <h1 style="margin:0;color:#2C2421;font-family:Georgia,serif;font-size:1.7rem;font-weight:400;">You're all set, {{ first_name }}!</h1>
+        </td>
+      </tr>
+
+      <!-- Appointment details -->
+      <tr>
+        <td style="padding:32px 40px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #EDE6DA;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Service</td>
+              <td style="padding:12px 0;border-bottom:1px solid #EDE6DA;color:#2C2421;font-family:Georgia,serif;font-size:0.95rem;text-align:right;">{{ service_name }}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #EDE6DA;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Date</td>
+              <td style="padding:12px 0;border-bottom:1px solid #EDE6DA;color:#2C2421;font-family:Georgia,serif;font-size:0.95rem;text-align:right;">{{ date }}</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0;border-bottom:1px solid #EDE6DA;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Time</td>
+              <td style="padding:12px 0;border-bottom:1px solid #EDE6DA;color:#2C2421;font-family:Georgia,serif;font-size:0.95rem;text-align:right;">{{ time }}</td>
+            </tr>
+            <tr>
+              <td style="padding:14px 0;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;font-weight:bold;">Deposit Due</td>
+              <td style="padding:14px 0;color:#2C2421;font-family:Georgia,serif;font-size:1.15rem;font-weight:bold;text-align:right;">${{ total_deposit }}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Payment box -->
+      <tr>
+        <td style="padding:0 40px 24px;">
+          <div style="background-color:#FFF8EC;border-left:3px solid #C8714A;padding:16px 20px;">
+            <p style="margin:0 0 6px;color:#2C2421;font-family:Arial,sans-serif;font-weight:bold;font-size:0.88rem;">Payment Required Within 24 Hours</p>
+            <p style="margin:0;color:#5C3520;font-family:Arial,sans-serif;font-size:0.83rem;line-height:1.6;">
+              Please send <strong>${{ total_deposit }}</strong> via <strong>Venmo, CashApp, or Zelle</strong> to secure your spot.
+              Your appointment is not confirmed until the deposit is received.
+            </p>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Location -->
+      <tr>
+        <td style="padding:0 40px 24px;">
+          <p style="margin:0 0 8px;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Location</p>
+          <p style="margin:0;color:#2C2421;font-family:Arial,sans-serif;font-size:0.88rem;line-height:1.75;">
+            Good Hair Daye<br>
+            470 L'Enfant Plaza Center, Unit 429<br>
+            Washington, D.C. 20024
+          </p>
+        </td>
+      </tr>
+
+      <!-- Cancellation policy -->
+      <tr>
+        <td style="padding:0 40px 32px;">
+          <div style="border:1px solid #D9CEBF;padding:16px 20px;">
+            <p style="margin:0 0 8px;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Cancellation Policy</p>
+            <p style="margin:0;color:#5C3520;font-family:Arial,sans-serif;font-size:0.82rem;line-height:1.65;">
+              At least <strong>48 hours notice</strong> is required to cancel or reschedule.
+              Cancellations within 48 hours forfeit the deposit.
+              No-shows are charged the full service price.
+            </p>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Contact -->
+      <tr>
+        <td style="padding:0 40px 32px;text-align:center;">
+          <p style="margin:0;color:#7A6355;font-family:Arial,sans-serif;font-size:0.83rem;">
+            Questions? Email us at <a href="mailto:{{ salon_email }}" style="color:#8B5E3C;">{{ salon_email }}</a>
+          </p>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="background-color:#F5F0E8;padding:20px 40px;text-align:center;border-top:1px solid #D9CEBF;">
+          <p style="margin:0;color:#7A6355;font-family:Arial,sans-serif;font-size:0.72rem;">
+            &copy; Good Hair Daye &middot; Washington, D.C.
+          </p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

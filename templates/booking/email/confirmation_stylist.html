@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Booking — Good Hair Daye</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0E8;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F0E8;">
+  <tr><td align="center" style="padding:40px 20px;">
+
+    <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background-color:#FFFFFF;border:1px solid #D9CEBF;">
+
+      <!-- Header -->
+      <tr>
+        <td style="background-color:#2C1A0E;padding:24px 40px;">
+          <p style="margin:0;color:#E4D8CC;font-family:Georgia,serif;font-size:1.1rem;letter-spacing:0.12em;">GOOD HAIR DAYE</p>
+          <p style="margin:6px 0 0;color:#C8A882;font-size:0.78rem;letter-spacing:0.06em;">New Appointment Booked</p>
+        </td>
+      </tr>
+
+      <!-- Service + time -->
+      <tr>
+        <td style="background-color:#EDE6DA;padding:20px 40px;border-bottom:1px solid #D9CEBF;">
+          <p style="margin:0 0 4px;color:#7A6355;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Service</p>
+          <p style="margin:0;color:#2C2421;font-family:Georgia,serif;font-size:1.4rem;font-weight:400;">{{ service_name }}</p>
+          <p style="margin:8px 0 0;color:#5C3520;font-size:0.9rem;">{{ date }} at {{ time }}</p>
+        </td>
+      </tr>
+
+      <!-- Client info -->
+      <tr>
+        <td style="padding:28px 40px 0;">
+          <p style="margin:0 0 16px;color:#7A6355;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;border-bottom:1px solid #EDE6DA;padding-bottom:8px;">Client Details</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;width:130px;">Name</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;">{{ appointment.client_name }}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;">Phone</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;"><a href="tel:{{ appointment.client_phone }}" style="color:#8B5E3C;">{{ appointment.client_phone }}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;">Email</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;"><a href="mailto:{{ appointment.client_email }}" style="color:#8B5E3C;">{{ appointment.client_email }}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;">Client Type</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;">{% if appointment.is_new_client %}New Client{% else %}Returning Client{% endif %}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;">Deposit</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;font-weight:bold;">${{ total_deposit }}{% if appointment.same_day_fee_applied %} (includes same-day fee){% endif %}</td>
+            </tr>
+            {% if appointment.notes %}
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;vertical-align:top;">Notes</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;line-height:1.5;">{{ appointment.notes }}</td>
+            </tr>
+            {% endif %}
+          </table>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="padding:28px 40px;text-align:center;border-top:1px solid #EDE6DA;margin-top:24px;">
+          <p style="margin:0;color:#7A6355;font-size:0.75rem;">Good Hair Daye Booking System</p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

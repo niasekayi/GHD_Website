@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Shop Extensions | Good Hair Daye{% endblock %}
+{% block nav_shop %}active{% endblock %}
+{% block sticky_cta %}
+<div class="sticky-cta-float">
+  <a href="{% url 'booking:index' %}" class="sticky-cta-btn" onclick="event.preventDefault(); Booking.open();">
+    <i class="far fa-calendar-alt"></i> Book Now
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
+  <div class="container-site text-center">
+    <p class="text-label mb-4" style="color: var(--color-brown);">Extensions Boutique</p>
+    <h1 class="text-heading-xl mb-4">Shop Coming Soon</h1>
+    <p class="text-body max-w-md mx-auto">
+      Our curated extension collection is launching soon. Follow us on Instagram to be the first to know.
+    </p>
+  </div>
+</section>
+{% endblock %}
