@@ -14,8 +14,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tailwind',
-    'theme',
     'pages',
     'shop',
     'booking',
@@ -24,6 +22,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,8 +79,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-TAILWIND_APP_NAME = 'theme'
-NPM_BIN_PATH = r'C:\nvm4w\nodejs\npm.cmd'
+# ── Static files (whitenoise serves them in production) ──────
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 # ── Email ──────────────────────────────────────────────────
 # In development: emails print to the console (EMAIL_BACKEND default).
@@ -118,7 +120,7 @@ SITE_URL = config('SITE_URL', default='https://goodhairdaye.com')
 
 # ── Production security (only active when DEBUG=False) ───────
 if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = ['https://goodhairdaye.com', 'https://www.goodhairdaye.com']
+    CSRF_TRUSTED_ORIGINS = ['https://goodhairdaye.com', 'https://www.goodhairdaye.com', 'https://*.railway.app']
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
