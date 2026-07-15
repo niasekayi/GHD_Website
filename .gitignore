@@ -44,3 +44,7 @@ npm-debug.log*
 dist/
 build/
 *.egg-info/
+
+# Database exports (contain private data)
+data.json
+*.json.bak
