@@ -123,7 +123,7 @@ const Booking = (() => {
       case 4: renderStep4(body); break;
       case 5: body.innerHTML = renderStep5(); break;
       case 6: body.innerHTML = renderStep6(); break;
-      case 7: body.innerHTML = renderStep7(); break;
+      case 7: renderStep7(body); break;
       case 8: body.innerHTML = renderStep8(); break;
     }
   }
@@ -455,13 +455,12 @@ const Booking = (() => {
     let html = `<div class="bk-step-content">
       <h2 class="bk-title">Choose a Date</h2>`;
 
-    if (av && av.next_month_note) {
-      html += `<div class="bk-notice info">${escHtml(av.next_month_note)}</div>`;
-    }
-
     if (!av || !av.dates || av.dates.length === 0) {
       html += `<p class="bk-subtitle">No upcoming availability right now. Please check back soon or reach out directly.</p>`;
     } else {
+      const nextMonthNote = (!canGoNext && av && av.next_month_note)
+        ? `<div class="bk-notice info" style="margin-top:0.5rem;">${escHtml(av.next_month_note)}</div>`
+        : '';
       html += `
       <div class="bk-calendar">
         <div class="bk-cal-header">
@@ -469,6 +468,7 @@ const Booking = (() => {
           <span class="bk-cal-month">${monthLabel}</span>
           <button class="bk-cal-nav" ${canGoNext ? '' : 'disabled'} onclick="Booking.calNext()">›</button>
         </div>
+        ${nextMonthNote}
         <div class="bk-cal-dow">
           <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
         </div>
@@ -641,8 +641,8 @@ const Booking = (() => {
     return `$${remaining.toFixed(0)}${isVariable ? '+' : ''}`;
   }
 
-  // ── Step 7: Review + cancellation ──────────────────────────
-  function renderStep7() {
+  // ── Step 7: Review + PayPal payment ────────────────────────
+  function renderStep7(container) {
     const av = state.availabilityData;
     const isSameDay = av && state.selectedDate === av.today;
     const feeEnabled = av && av.same_day_fee_enabled;
@@ -652,9 +652,9 @@ const Booking = (() => {
     const totalDeposit = deposit + (isSameDay && feeEnabled ? fee : 0);
     const remaining = remainingBalanceDisplay(svc, state.selectedAddons);
 
-    const cancellationText = `Good Hair Daye requires at least 48 hours notice for cancellations or rescheduling.
-    Cancellations made within 48 hours of your appointment will result in forfeiture of your deposit.
-    No-shows will be charged the full service price. Same-day cancellations are non-refundable.`;
+    state.currentDepositAmount = totalDeposit;
+
+    const cancellationText = `Good Hair Daye requires at least 48 hours notice for cancellations or rescheduling. Cancellations made within 48 hours of your appointment will result in forfeiture of your deposit. No-shows will be charged the full service price. Same-day cancellations are non-refundable.`;
 
     let addonsRow = '';
     if (state.selectedAddons.length > 0) {
@@ -667,11 +667,11 @@ const Booking = (() => {
     const remainingRow = remaining ? `
       <div class="bk-review-row">
         <span class="bk-review-label">Remaining Balance</span>
-        <span class="bk-review-value" style="color:var(--color-mid);font-size:0.9em;">${escHtml(remaining)} upon arrival</span>
+        <span class="bk-review-value" style="color:var(--color-mid);font-size:0.9em;">$${escHtml(remaining)} upon arrival</span>
       </div>` : '';
 
-    return `<div class="bk-step-content">
-      <h2 class="bk-title">Review Your Booking</h2>
+    container.innerHTML = `<div class="bk-step-content">
+      <h2 class="bk-title">Review &amp; Pay Deposit</h2>
 
       <div class="bk-review-card">
         <div class="bk-review-row">
@@ -701,17 +701,17 @@ const Booking = (() => {
           <span class="bk-review-value">+$${fee.toFixed(2)}</span>
         </div>` : ''}
         <div class="bk-review-row total">
-          <span class="bk-review-label">Deposit Due Online</span>
+          <span class="bk-review-label">Deposit Due Now</span>
           <span class="bk-review-value">$${totalDeposit.toFixed(2)}</span>
         </div>
         ${remainingRow}
       </div>
 
       <div class="bk-deposit-note">
-        Your deposit of <strong>$${totalDeposit.toFixed(2)}</strong> is paid securely online — you'll receive a payment link at <strong>${escHtml(state.clientEmail)}</strong> after confirming.
+        Your <strong>$${totalDeposit.toFixed(2)} deposit</strong> is paid securely via PayPal — your appointment is confirmed instantly once payment is complete.
       </div>
       ${remaining ? `<div class="bk-arrival-note">
-        The remaining balance of <strong>${escHtml(remaining)}</strong> is due upon arrival via <strong>Zelle, CashApp, or Venmo</strong>.
+        The remaining balance of <strong>$${escHtml(remaining)}</strong> is due upon arrival via <strong>Zelle, CashApp, or Venmo</strong>.
       </div>` : ''}
 
       <div class="bk-cancellation-box">
@@ -723,31 +723,90 @@ const Booking = (() => {
         </label>
       </div>
 
-      <p id="bk-review-error" class="bk-error" style="display:none;"></p>
-      <div class="bk-nav">
+      <p id="bk-review-error" class="bk-error" style="display:none;margin-top:0.75rem;"></p>
+
+      <div class="bk-nav" style="margin-bottom:0.5rem;">
         <button class="bk-btn-ghost" onclick="Booking.goTo(6)">← Back</button>
-        <button class="bk-btn-primary" id="bk-confirm-btn" onclick="Booking.submitBooking()">
-          Confirm &amp; Pay Deposit →
-        </button>
       </div>
+
+      <div id="bk-paypal-hint" class="bk-paypal-hint" style="${state.cancellationAcknowledged ? 'display:none;' : ''}">
+        Please acknowledge the cancellation policy above to continue with payment.
+      </div>
+      <div id="bk-paypal-btn-container" style="${state.cancellationAcknowledged ? '' : 'display:none;'}"></div>
     </div>`;
+
+    if (state.cancellationAcknowledged) {
+      _mountPayPalButtons(totalDeposit, svc.name);
+    }
   }
 
   function toggleAck(checked) {
     state.cancellationAcknowledged = checked;
+    const hint = document.getElementById('bk-paypal-hint');
+    const btnContainer = document.getElementById('bk-paypal-btn-container');
+    if (!hint || !btnContainer) return;
+    if (checked) {
+      hint.style.display = 'none';
+      btnContainer.style.display = '';
+      if (!btnContainer.hasChildNodes()) {
+        _mountPayPalButtons(state.currentDepositAmount || 40, '');
+      }
+    } else {
+      hint.style.display = '';
+      btnContainer.style.display = 'none';
+    }
   }
 
-  // ── Submit ──────────────────────────────────────────────────
-  async function submitBooking() {
-    const ack = document.getElementById('bk-cancel-ack');
-    if (!ack || !ack.checked) {
-      const err = document.getElementById('bk-review-error');
-      if (err) { err.textContent = 'Please acknowledge the cancellation policy.'; err.style.display = 'block'; }
+  function _mountPayPalButtons(totalDeposit, serviceName) {
+    const container = document.getElementById('bk-paypal-btn-container');
+    if (!container) return;
+
+    if (!window.paypal) {
+      container.innerHTML = '<p style="color:var(--color-dark);font-size:0.8rem;padding:0.5rem 0;">PayPal failed to load. Please refresh the page and try again.</p>';
       return;
     }
 
-    const btn = document.getElementById('bk-confirm-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Booking…'; }
+    container.innerHTML = '';
+
+    window.paypal.Buttons({
+      style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay', height: 45 },
+
+      createOrder() {
+        const errEl = document.getElementById('bk-review-error');
+        if (errEl) errEl.style.display = 'none';
+        const desc = `Hair Appointment Deposit — ${serviceName || 'Good Hair Daye'}`;
+        return fetch('/book/api/create-paypal-order/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+          body: JSON.stringify({ amount: totalDeposit.toFixed(2), description: desc }),
+        })
+          .then(r => r.json())
+          .then(d => {
+            if (d.error) throw new Error(d.error);
+            return d.order_id;
+          });
+      },
+
+      onApprove(data) {
+        return _completeBooking(data.orderID);
+      },
+
+      onError(err) {
+        const errEl = document.getElementById('bk-review-error');
+        if (errEl) { errEl.textContent = 'Payment failed. Please try again or use a different payment method.'; errEl.style.display = 'block'; }
+      },
+
+      onCancel() {
+        const errEl = document.getElementById('bk-review-error');
+        if (errEl) { errEl.textContent = 'Payment cancelled — your appointment has not been booked. You can try again whenever you\'re ready.'; errEl.style.display = 'block'; }
+      },
+    }).render('#bk-paypal-btn-container');
+  }
+
+  async function _completeBooking(paypalOrderId) {
+    const errEl = document.getElementById('bk-review-error');
+    const container = document.getElementById('bk-paypal-btn-container');
+    if (container) container.innerHTML = '<p style="text-align:center;font-size:0.85rem;color:var(--color-dark);padding:1rem 0;">Confirming your appointment…</p>';
 
     try {
       const res = await fetch('/book/api/book/', {
@@ -764,6 +823,7 @@ const Booking = (() => {
           client_phone: state.clientPhone,
           notes: state.clientNotes,
           cancellation_acknowledged: true,
+          paypal_order_id: paypalOrderId,
         }),
       });
       const data = await res.json();
@@ -772,14 +832,12 @@ const Booking = (() => {
         state.confirmation = data;
         goTo(8);
       } else {
-        const err = document.getElementById('bk-review-error');
-        if (err) { err.textContent = data.error || 'Something went wrong. Please try again.'; err.style.display = 'block'; }
-        if (btn) { btn.disabled = false; btn.textContent = 'Confirm Booking →'; }
+        if (errEl) { errEl.textContent = data.error || 'Something went wrong after payment. Please contact us immediately with your PayPal confirmation.'; errEl.style.display = 'block'; }
+        if (container) container.innerHTML = '';
       }
     } catch (e) {
-      const err = document.getElementById('bk-review-error');
-      if (err) { err.textContent = 'Network error. Please try again.'; err.style.display = 'block'; }
-      if (btn) { btn.disabled = false; btn.textContent = 'Confirm Booking →'; }
+      if (errEl) { errEl.textContent = 'Network error after payment. Please contact us with your PayPal confirmation to verify your booking.'; errEl.style.display = 'block'; }
+      if (container) container.innerHTML = '';
     }
   }
 
@@ -858,7 +916,6 @@ const Booking = (() => {
     selectTime,
     continueToReview,
     toggleAck,
-    submitBooking,
   };
 })();
 

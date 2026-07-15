@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Shop Order — Good Hair Daye</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F0E8;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F0E8;">
+  <tr><td align="center" style="padding:40px 20px;">
+
+    <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background-color:#FFFFFF;border:1px solid #D9CEBF;">
+
+      <!-- Header -->
+      <tr>
+        <td style="background-color:#2C1A0E;padding:24px 40px;">
+          <p style="margin:0;color:#E4D8CC;font-family:Georgia,serif;font-size:1.1rem;letter-spacing:0.12em;">GOOD HAIR DAYE</p>
+          <p style="margin:6px 0 0;color:#C8A882;font-size:0.78rem;letter-spacing:0.06em;">New Shop Order</p>
+        </td>
+      </tr>
+
+      <!-- Order summary -->
+      <tr>
+        <td style="background-color:#EDE6DA;padding:20px 40px;border-bottom:1px solid #D9CEBF;">
+          <p style="margin:0 0 4px;color:#7A6355;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">Order Number</p>
+          <p style="margin:0;color:#2C2421;font-family:Georgia,serif;font-size:1.4rem;font-weight:400;">{{ order.order_number }}</p>
+          <p style="margin:8px 0 0;color:#5C3520;font-size:0.9rem;font-weight:bold;">Total: ${{ order.total|floatformat:2 }} (Paid)</p>
+        </td>
+      </tr>
+
+      <!-- Customer info -->
+      <tr>
+        <td style="padding:28px 40px 0;">
+          <p style="margin:0 0 16px;color:#7A6355;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;border-bottom:1px solid #EDE6DA;padding-bottom:8px;">Customer Details</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;width:130px;">Name</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;">{{ order.customer_name }}</td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;">Phone</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;"><a href="tel:{{ order.customer_phone }}" style="color:#8B5E3C;">{{ order.customer_phone }}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;">Email</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;"><a href="mailto:{{ order.customer_email }}" style="color:#8B5E3C;">{{ order.customer_email }}</a></td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#7A6355;font-size:0.8rem;vertical-align:top;">Shipping</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.88rem;line-height:1.5;">
+                {{ order.shipping_address_line1 }}{% if order.shipping_address_line2 %}<br>{{ order.shipping_address_line2 }}{% endif %}<br>
+                {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip }}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <!-- Items -->
+      <tr>
+        <td style="padding:24px 40px 0;">
+          <p style="margin:0 0 12px;color:#7A6355;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;border-bottom:1px solid #EDE6DA;padding-bottom:8px;">Items</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            {% for item in items %}
+            <tr>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.85rem;">{{ item.product_name }} &times; {{ item.quantity }}</td>
+              <td style="padding:8px 0;color:#2C2421;font-size:0.85rem;text-align:right;">${{ item.line_total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </td>
+      </tr>
+
+      <!-- Footer -->
+      <tr>
+        <td style="padding:28px 40px;text-align:center;border-top:1px solid #EDE6DA;margin-top:24px;">
+          <p style="margin:0;color:#7A6355;font-size:0.75rem;">Good Hair Daye Shop System</p>
+        </td>
+      </tr>
+
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>

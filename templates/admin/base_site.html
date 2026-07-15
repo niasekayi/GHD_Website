@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  :root {
+    --primary:                #A8897A;
+    --secondary:              #7A5A4C;
+    --accent:                 #DDD0C8;
+    --primary-fg:             #fff;
+    --header-color:           #FAF8F5;
+    --header-branding-color:  #FAF8F5;
+    --header-bg:              #5C4840;
+    --header-link-color:      #FAF8F5;
+    --breadcrumbs-fg:         #DDD0C8;
+    --breadcrumbs-link-fg:    #FAF8F5;
+    --breadcrumbs-bg:         #7A5A4C;
+    --link-fg:                #7A5A4C;
+    --link-hover-color:       #5C4840;
+    --link-selected-fg:       #A8897A;
+    --button-fg:              #fff;
+    --button-bg:              #A8897A;
+    --button-hover-bg:        #7A5A4C;
+    --default-button-bg:      #7A5A4C;
+    --default-button-hover-bg:#5C4840;
+    --delete-button-bg:       #b45309;
+    --delete-button-hover-bg: #92400e;
+    --darkened-bg:            #FAF8F5;
+    --selected-bg:            #F4EDE7;
+    --selected-row:           #fdf8f5;
+    --hairline-color:         #DDD0C8;
+    --border-color:           #DDD0C8;
+  }
+
+  #header { letter-spacing: 0.04em; }
+  #branding h1, #branding h1 a { font-weight: 400; letter-spacing: 0.06em; }
+  .module h2, .module caption, .inline-group h2 { background: var(--secondary); }
+  div.breadcrumbs { font-size: 0.8rem; }
+  .object-tools a { border-radius: 2px; }
+  #changelist-filter h2 { background: var(--secondary); }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+  <a href="{% url 'admin:index' %}">Good Hair Daye</a>
+</h1>
+<span style="font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;opacity:0.7;margin-left:0.5rem;">Admin</span>
+{% endblock %}

@@ -1,5 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Client Reviews | Good Hair Daye{% endblock %}
+{% block title %}Client Reviews | Good Hair Daye — Washington D.C. Hair Salon{% endblock %}
+{% block meta_description %}Read real client reviews for Good Hair Daye, Washington D.C.'s boutique hair salon. Specializing in silk presses, extensions, and healthy hair care inside L'Enfant Plaza.{% endblock %}
+{% block og_title %}Client Reviews | Good Hair Daye — Washington D.C.{% endblock %}
+{% block og_description %}See what clients are saying about Good Hair Daye — Washington D.C.'s boutique hair salon for silk presses, extensions, and healthy hair.{% endblock %}
 
 {% block content %}
 <section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
@@ -12,9 +15,13 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       {% for review in reviews %}
       <div class="review-card">
-        <p class="review-stars">★★★★★</p>
-        <p class="review-quote">"{{ review.quote }}"</p>
-        <p class="review-author">— {{ review.author }}</p>
+        <p class="review-stars">{% for i in "12345" %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}</p>
+        <p class="review-quote">"{{ review.body }}"</p>
+        <p class="review-author">— {{ review.client_name }}</p>
+      </div>
+      {% empty %}
+      <div class="text-center" style="grid-column: 1/-1; color: var(--color-mid); padding: 3rem 0;">
+        <p class="text-body">No reviews yet.</p>
       </div>
       {% endfor %}
     </div>

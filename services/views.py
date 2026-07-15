@@ -9,7 +9,7 @@ def index(request):
     categories = list(
         ServiceCategory.objects.order_by('order', 'name').values_list('name', flat=True)
     )
-    services = [
+    all_services = [
         {
             'id': s.id,
             'name': s.name,
@@ -22,7 +22,10 @@ def index(request):
         }
         for s in db_services
     ]
+    services = [s for s in all_services if not s['is_addon']]
+    addons   = [s for s in all_services if s['is_addon']]
     return render(request, 'services/index.html', {
         'services': services,
+        'addons': addons,
         'categories': categories,
     })

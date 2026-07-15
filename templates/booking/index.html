@@ -15,9 +15,15 @@
   <div class="container-site text-center">
     <p class="text-label mb-4" style="color: var(--color-brown);">Appointments</p>
     <h1 class="text-heading-xl mb-4">Book Your Visit</h1>
-    <p class="text-body max-w-md mx-auto">
-      Online booking coming soon. Please reach out directly to schedule your appointment.
+    <p class="text-body max-w-md mx-auto mb-6">
+      Select a service, pick a date, and pay your deposit to lock in your appointment.
     </p>
+    <button class="btn btn-primary" onclick="Booking.open()">Book Now</button>
   </div>
 </section>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Booking !== 'undefined') Booking.open();
+  });
+</script>
 {% endblock %}

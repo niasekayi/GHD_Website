@@ -1,0 +1,13 @@
+GOOD HAIR DAYE — ORDER UPDATE
+==============================
+
+Hi {{ first_name }},
+
+Your order #{{ order.order_number }} is now: {{ order.get_status_display }}
+
+ITEMS
+{% for item in items %}  {{ item.product_name }} x {{ item.quantity }} — ${{ item.line_total|floatformat:2 }}
+{% endfor %}
+Questions? Email {{ salon_email }}
+
+— Good Hair Daye

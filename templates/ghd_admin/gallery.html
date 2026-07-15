@@ -1,0 +1,270 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Gallery — GHD Admin{% endblock %}
+{% block nav_gallery %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .gal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .gal-card {
+    background: var(--white);
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .gal-img-wrap {
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--beige);
+    position: relative;
+  }
+  .gal-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gal-card-body { padding: 0.75rem; }
+  .gal-caption { font-size: 0.8rem; color: var(--dark); margin-bottom: 0.25rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gal-service-tag { font-size: 0.65rem; color: var(--brown); letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+  .gal-card-actions { display: flex; gap: 0.4rem; }
+  .gal-inactive-badge {
+    position: absolute; top: 0.5rem; left: 0.5rem;
+    background: rgba(0,0,0,0.55); color: #fff;
+    font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.2rem 0.5rem; border-radius: 2px;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--tan); border-radius: 4px;
+    background: var(--white); cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 1.5rem;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--brown); background: var(--beige); }
+  .upload-zone-inner { padding: 2rem 1rem; text-align: center; }
+  .upload-zone input[type=file] { display: none; }
+  .upload-zone-label { font-size: 0.85rem; color: var(--mid); }
+  .upload-zone-sub { font-size: 0.7rem; color: var(--tan); margin-top: 0.3rem; }
+
+  /* Upload form that appears after picking a file */
+  .upload-form { padding: 1.25rem; border-top: 1px solid var(--tan); display: none; }
+  .upload-form.open { display: block; }
+
+  /* Edit drawer */
+  .gal-edit-drawer {
+    display: none; position: fixed;
+    top: 56px; right: 0; bottom: 0; width: 380px;
+    background: var(--cream); border-left: 1px solid var(--tan);
+    padding: 1.5rem; overflow-y: auto; z-index: 200;
+    box-shadow: -4px 0 24px rgba(0,0,0,0.08);
+  }
+  .gal-edit-drawer.open { display: block; }
+  .gal-edit-preview { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; margin-bottom: 1rem; border: 1px solid var(--tan); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Style Gallery</h1>
+  <span style="font-size:0.78rem;color:var(--mid);">{{ photos|length }} photo{{ photos|length|pluralize }}</span>
+</div>
+
+<!-- Upload zone -->
+<div class="upload-zone" id="upload-zone"
+     ondragover="event.preventDefault();this.classList.add('drag')"
+     ondragleave="this.classList.remove('drag')"
+     ondrop="handleDrop(event)">
+  <input type="file" id="file-input" accept=".jpg,.jpeg,.png" onchange="fileChosen(this.files[0])" />
+  <div class="upload-zone-inner" onclick="document.getElementById('file-input').click()">
+    <div class="upload-zone-label">Click to upload or drag a photo here</div>
+    <div class="upload-zone-sub">JPG and PNG only</div>
+  </div>
+
+  <!-- Form shown after file is picked -->
+  <div class="upload-form" id="upload-form">
+    <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1rem;">
+      New Photo: <span id="chosen-filename" style="font-weight:400;color:var(--mid);text-transform:none;"></span>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Style Name / Caption</label>
+        <input class="adm-input" id="up-caption" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Link to a Service (optional)</label>
+        <select class="adm-input" id="up-service">
+          <option value="">— No service link —</option>
+          {% for svc in services %}
+          <option value="{{ svc.id }}">{{ svc.category.name }} · {{ svc.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.75rem;">
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="cancelUpload()">Cancel</button>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="uploadPhoto()">Upload Photo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grid -->
+{% if photos %}
+<div class="gal-grid" id="gal-grid">
+  {% for photo in photos %}
+  <div class="gal-card" id="gal-{{ photo.id }}">
+    <div class="gal-img-wrap">
+      {% if not photo.is_active %}<div class="gal-inactive-badge">Hidden</div>{% endif %}
+      <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" />
+    </div>
+    <div class="gal-card-body">
+      <div class="gal-caption">{{ photo.caption|default:"No caption" }}</div>
+      {% if photo.service %}
+      <div class="gal-service-tag">Book link: {{ photo.service.name }}</div>
+      {% endif %}
+      <div class="gal-card-actions">
+        <button class="adm-btn adm-btn-outline adm-btn-sm"
+                onclick="openEdit({{ photo.id }}, '{{ photo.image.url }}', '{{ photo.caption|escapejs }}', {{ photo.service_id|default:'null' }}, {{ photo.order }}, {{ photo.is_active|yesno:'true,false' }})">Edit</button>
+        <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deletePhoto({{ photo.id }})">Delete</button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="adm-card adm-empty">No photos yet. Upload one above.</div>
+{% endif %}
+
+<!-- Edit drawer -->
+<div class="gal-edit-drawer" id="edit-drawer">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <span style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);">Edit Photo</span>
+    <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="closeEdit()">Close</button>
+  </div>
+  <img id="edit-preview" src="" alt="" class="gal-edit-preview" />
+  <div class="adm-field">
+    <label class="adm-label">Replace Image (JPG/PNG)</label>
+    <input type="file" accept=".jpg,.jpeg,.png" id="edit-file" class="adm-input" style="padding:0.3rem;" />
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Style Name / Caption</label>
+    <input class="adm-input" id="edit-caption" />
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Link to a Service (optional)</label>
+    <select class="adm-input" id="edit-service">
+      <option value="">— No service link —</option>
+      {% for svc in services %}
+      <option value="{{ svc.id }}">{{ svc.category.name }} · {{ svc.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="adm-field-row">
+    <div class="adm-field">
+      <label class="adm-label">Order</label>
+      <input class="adm-input" type="number" id="edit-order" min="0" />
+    </div>
+    <div class="adm-field" style="display:flex;align-items:center;gap:0.5rem;padding-top:1.4rem;">
+      <label class="adm-toggle">
+        <input type="checkbox" id="edit-active" />
+        <span class="adm-toggle-slider"></span>
+      </label>
+      <span style="font-size:0.78rem;color:var(--dark);">Visible on site</span>
+    </div>
+  </div>
+  <button class="adm-btn adm-btn-primary" style="width:100%;margin-top:0.5rem;" onclick="saveEdit()">Save Changes</button>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  let editingId = null;
+  let chosenFile = null;
+
+  function fileChosen(file) {
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['jpg','jpeg','png'].includes(ext)) {
+      toast('Only JPG and PNG files are allowed.', true);
+      document.getElementById('file-input').value = '';
+      return;
+    }
+    chosenFile = file;
+    document.getElementById('chosen-filename').textContent = file.name;
+    document.getElementById('upload-form').classList.add('open');
+  }
+
+  function cancelUpload() {
+    chosenFile = null;
+    document.getElementById('file-input').value = '';
+    document.getElementById('up-caption').value = '';
+    document.getElementById('up-service').value = '';
+    document.getElementById('upload-form').classList.remove('open');
+  }
+
+  async function uploadPhoto() {
+    if (!chosenFile) return;
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fd.append('image',      chosenFile);
+    fd.append('caption',    document.getElementById('up-caption').value.trim());
+    fd.append('service_id', document.getElementById('up-service').value);
+    try {
+      const r = await fetch('/admin/api/gallery/add/', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.success) { toast('Photo uploaded'); location.reload(); }
+      else toast(d.error || 'Upload failed', true);
+    } catch (e) {
+      toast('Upload failed — run: python manage.py migrate', true);
+    }
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('upload-zone').classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file) fileChosen(file);
+  }
+
+  function openEdit(id, imgUrl, caption, serviceId, order, isActive) {
+    editingId = id;
+    document.getElementById('edit-preview').src = imgUrl;
+    document.getElementById('edit-caption').value = caption;
+    document.getElementById('edit-order').value = order;
+    document.getElementById('edit-active').checked = isActive;
+    document.getElementById('edit-file').value = '';
+    const sel = document.getElementById('edit-service');
+    sel.value = serviceId ? String(serviceId) : '';
+    document.getElementById('edit-drawer').classList.add('open');
+  }
+  function closeEdit() {
+    document.getElementById('edit-drawer').classList.remove('open');
+    editingId = null;
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fd.append('caption',    document.getElementById('edit-caption').value);
+    fd.append('service_id', document.getElementById('edit-service').value);
+    fd.append('order',      document.getElementById('edit-order').value);
+    fd.append('is_active',  document.getElementById('edit-active').checked ? 'true' : 'false');
+    const f = document.getElementById('edit-file').files[0];
+    if (f) fd.append('image', f);
+    const r = await fetch(`/admin/api/gallery/${editingId}/update/`, { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) { toast('Saved!'); location.reload(); }
+    else toast(d.error || 'Error saving', true);
+  }
+
+  async function deletePhoto(id) {
+    if (!confirm('Delete this photo? This cannot be undone.')) return;
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    const r = await fetch(`/admin/api/gallery/${id}/delete/`, { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) { toast('Photo deleted'); document.getElementById('gal-' + id)?.remove(); }
+    else toast('Error deleting', true);
+  }
+</script>
+{% endblock %}

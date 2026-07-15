@@ -1,0 +1,16 @@
+NEW SHOP ORDER — GOOD HAIR DAYE
+================================
+
+Order #{{ order.order_number }}
+Total: ${{ order.total|floatformat:2 }} (Paid)
+
+CUSTOMER
+  Name:     {{ order.customer_name }}
+  Phone:    {{ order.customer_phone }}
+  Email:    {{ order.customer_email }}
+  Shipping: {{ order.shipping_address_line1 }}{% if order.shipping_address_line2 %}, {{ order.shipping_address_line2 }}{% endif %}, {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip }}
+
+ITEMS
+{% for item in items %}  {{ item.product_name }} x {{ item.quantity }} — ${{ item.line_total|floatformat:2 }}
+{% endfor %}
+— Good Hair Daye Shop System

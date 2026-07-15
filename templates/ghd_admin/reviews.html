@@ -1,0 +1,262 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Reviews — GHD Admin{% endblock %}
+{% block nav_reviews %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .rev-card {
+    background: var(--white);
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+  }
+  .rev-card-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+  }
+  .rev-stars { color: #C8A870; font-size: 0.85rem; letter-spacing: 0.05em; }
+  .rev-name  { font-weight: 500; font-size: 0.95rem; color: var(--dark); }
+  .rev-body-preview { font-size: 0.78rem; color: var(--mid); margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 480px; }
+  .rev-media-badge { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: 2px; background: var(--beige); color: var(--brown); }
+
+  .rev-detail {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid var(--beige);
+  }
+  .rev-card.expanded .rev-detail { display: block; }
+  .rev-expand-btn { font-size: 0.75rem; color: var(--mid); transition: transform 0.2s; }
+  .rev-card.expanded .rev-expand-btn { transform: rotate(180deg); }
+
+  .rev-media-preview {
+    margin-top: 0.75rem;
+    border-radius: 4px;
+    overflow: hidden;
+    max-width: 300px;
+  }
+  .rev-media-preview img { width: 100%; display: block; border-radius: 4px; }
+
+  .add-review-form {
+    background: var(--cream);
+    border: 2px dashed var(--tan);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: none;
+  }
+  .add-review-form.open { display: block; }
+
+  .star-picker { display: flex; gap: 0.3rem; margin-top: 0.25rem; }
+  .star-picker span {
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: var(--tan);
+    transition: color 0.1s;
+  }
+  .star-picker span.on { color: #C8A870; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Client Reviews</h1>
+  <button class="adm-btn adm-btn-primary" onclick="toggleAddForm()">+ Add Review</button>
+</div>
+
+<!-- Add review form -->
+<div class="add-review-form" id="add-review-form">
+  <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1.25rem;">New Review</div>
+  <div class="adm-field-row">
+    <div class="adm-field">
+      <label class="adm-label">Client Name *</label>
+      <input class="adm-input" id="new-name" />
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Rating</label>
+      <div class="star-picker" id="new-stars">
+        <span onclick="setStars('new',1)">★</span>
+        <span onclick="setStars('new',2)">★</span>
+        <span onclick="setStars('new',3)">★</span>
+        <span onclick="setStars('new',4)">★</span>
+        <span onclick="setStars('new',5)">★</span>
+      </div>
+      <input type="hidden" id="new-rating" value="5" />
+    </div>
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Review Text *</label>
+    <textarea class="adm-textarea" id="new-body"></textarea>
+  </div>
+  <div class="adm-field-row">
+    <div class="adm-field">
+      <label class="adm-label">Photo (optional)</label>
+      <input type="file" accept="image/*" id="new-photo" class="adm-input" style="padding:0.3rem;" />
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Video URL (optional)</label>
+      <input class="adm-input" id="new-video" type="url" />
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.75rem;">
+    <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleAddForm()">Cancel</button>
+    <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addReview()">Add Review</button>
+  </div>
+</div>
+
+<!-- Reviews list -->
+{% if reviews %}
+{% for rev in reviews %}
+<div class="rev-card {% if not rev.is_active %}" style="opacity:0.55;"{% else %}"{% endif %} id="rev-{{ rev.id }}">
+  <div class="rev-card-header" onclick="toggleRev({{ rev.id }})">
+    <div class="rev-stars">{% for i in "12345" %}{% if forloop.counter <= rev.rating %}★{% else %}☆{% endif %}{% endfor %}</div>
+    <div>
+      <div class="rev-name">{{ rev.client_name }}{% if not rev.is_active %} <span style="font-size:0.65rem;color:var(--mid);">· Hidden</span>{% endif %}</div>
+      <div class="rev-body-preview">{{ rev.body }}</div>
+    </div>
+    <div style="display:flex;gap:0.4rem;">
+      {% if rev.photo %}<span class="rev-media-badge">Photo</span>{% endif %}
+      {% if rev.video_url %}<span class="rev-media-badge">Video</span>{% endif %}
+    </div>
+    <span class="rev-expand-btn">▼</span>
+  </div>
+
+  <div class="rev-detail" id="rev-detail-{{ rev.id }}">
+    <div class="adm-field-row" style="padding-top:1rem;">
+      <div class="adm-field">
+        <label class="adm-label">Client Name</label>
+        <input class="adm-input" id="rname-{{ rev.id }}" value="{{ rev.client_name }}" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Rating</label>
+        <div class="star-picker" id="stars-{{ rev.id }}">
+          <span onclick="setStars({{ rev.id }},1)">★</span>
+          <span onclick="setStars({{ rev.id }},2)">★</span>
+          <span onclick="setStars({{ rev.id }},3)">★</span>
+          <span onclick="setStars({{ rev.id }},4)">★</span>
+          <span onclick="setStars({{ rev.id }},5)">★</span>
+        </div>
+        <input type="hidden" id="rrating-{{ rev.id }}" value="{{ rev.rating }}" />
+      </div>
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Review Text</label>
+      <textarea class="adm-textarea" id="rbody-{{ rev.id }}">{{ rev.body }}</textarea>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Replace Photo</label>
+        <input type="file" accept="image/*" id="rphoto-{{ rev.id }}" class="adm-input" style="padding:0.3rem;" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Video URL</label>
+        <input class="adm-input" type="url" id="rvideo-{{ rev.id }}" value="{{ rev.video_url }}" />
+      </div>
+    </div>
+    {% if rev.photo %}
+    <div class="rev-media-preview"><img src="{{ rev.photo.url }}" alt="" /></div>
+    {% endif %}
+    {% if rev.video_url %}
+    <div style="font-size:0.75rem;color:var(--brown);margin-top:0.5rem;">Video: <a href="{{ rev.video_url }}" target="_blank" style="color:var(--brown);">{{ rev.video_url|truncatechars:60 }}</a></div>
+    {% endif %}
+    <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem;">
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;cursor:pointer;">
+        <input type="checkbox" id="ractive-{{ rev.id }}" {% if rev.is_active %}checked{% endif %} />
+        Visible on site
+      </label>
+      <div style="margin-left:auto;display:flex;gap:0.5rem;">
+        <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deleteReview({{ rev.id }}, '{{ rev.client_name|escapejs }}')">Delete</button>
+        <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveReview({{ rev.id }})">Save</button>
+      </div>
+    </div>
+    <span id="rsaved-{{ rev.id }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;display:block;text-align:right;margin-top:0.3rem;">Saved</span>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="adm-card adm-empty">No reviews yet.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Init star displays
+  document.querySelectorAll('.star-picker').forEach(picker => {
+    const id = picker.id.replace('stars-','').replace('new-stars','new');
+    const rating = id === 'new'
+      ? parseInt(document.getElementById('new-rating').value)
+      : parseInt(document.getElementById('rrating-' + id).value);
+    renderStars(id, rating);
+  });
+
+  function setStars(id, val) {
+    const inputId = id === 'new' ? 'new-rating' : 'rrating-' + id;
+    document.getElementById(inputId).value = val;
+    renderStars(id, val);
+  }
+  function renderStars(id, val) {
+    const pickerId = id === 'new' ? 'new-stars' : 'stars-' + id;
+    document.querySelectorAll('#' + pickerId + ' span').forEach((s, i) => {
+      s.classList.toggle('on', i < val);
+    });
+  }
+
+  function toggleAddForm() {
+    document.getElementById('add-review-form').classList.toggle('open');
+  }
+  function toggleRev(id) {
+    document.getElementById('rev-' + id).classList.toggle('expanded');
+  }
+
+  async function addReview() {
+    const name = document.getElementById('new-name').value.trim();
+    const body = document.getElementById('new-body').value.trim();
+    if (!name || !body) { toast('Name and review text are required.', true); return; }
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fd.append('client_name', name);
+    fd.append('body', body);
+    fd.append('rating', document.getElementById('new-rating').value);
+    fd.append('video_url', document.getElementById('new-video').value);
+    if (document.getElementById('new-photo').files[0])
+      fd.append('photo', document.getElementById('new-photo').files[0]);
+    const r = await fetch('/admin/api/reviews/add/', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) { toast('Review added!'); location.reload(); }
+    else toast(d.error || 'Error adding review', true);
+  }
+
+  async function saveReview(id) {
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    fd.append('client_name', document.getElementById('rname-' + id).value);
+    fd.append('body',        document.getElementById('rbody-' + id).value);
+    fd.append('rating',      document.getElementById('rrating-' + id).value);
+    fd.append('video_url',   document.getElementById('rvideo-' + id).value);
+    fd.append('is_active',   document.getElementById('ractive-' + id).checked ? 'true' : 'false');
+    if (document.getElementById('rphoto-' + id).files[0])
+      fd.append('photo', document.getElementById('rphoto-' + id).files[0]);
+    const r = await fetch(`/admin/api/reviews/${id}/update/`, { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) {
+      const el = document.getElementById('rsaved-' + id);
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 1800);
+    } else toast(d.error || 'Error saving', true);
+  }
+
+  async function deleteReview(id, name) {
+    if (!confirm('Delete review from ' + name + '?')) return;
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrf());
+    const r = await fetch(`/admin/api/reviews/${id}/delete/`, { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) { toast('Review deleted'); document.getElementById('rev-' + id)?.remove(); }
+    else toast('Error deleting', true);
+  }
+</script>
+{% endblock %}

@@ -5,7 +5,59 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Good Hair Daye | Washington, D.C. Hair Salon & Extensions{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}Washington D.C.'s premier hair salon and extensions boutique.{% endblock %}" />
+  <meta name="description" content="{% block meta_description %}Washington D.C. hair salon specializing in silk presses, healthy hair care, and premium extension installation. Located inside L'Enfant Plaza. Book your appointment today.{% endblock %}" />
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="{{ SITE_URL }}{{ request.path }}" />
+
+  <!-- Open Graph (Facebook, Instagram link previews) -->
+  <meta property="og:type"        content="{% block og_type %}website{% endblock %}" />
+  <meta property="og:site_name"   content="Good Hair Daye" />
+  <meta property="og:title"       content="{% block og_title %}Good Hair Daye | Washington, D.C. Hair Salon & Extensions{% endblock %}" />
+  <meta property="og:description" content="{% block og_description %}Washington D.C. hair salon specializing in silk presses, healthy hair care, and premium extension installation. Book your appointment today.{% endblock %}" />
+  <meta property="og:url"         content="{{ SITE_URL }}{{ request.path }}" />
+  <meta property="og:image"       content="{% block og_image %}{{ SITE_URL }}{% static 'images/logo.png' %}{% endblock %}" />
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="{% block twitter_title %}Good Hair Daye | Washington, D.C. Hair Salon & Extensions{% endblock %}" />
+  <meta name="twitter:description" content="{% block twitter_description %}Washington D.C. hair salon specializing in silk presses, healthy hair, and premium extensions.{% endblock %}" />
+  <meta name="twitter:image"       content="{% block twitter_image %}{{ SITE_URL }}{% static 'images/logo.png' %}{% endblock %}" />
+
+  <!-- Local Business Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "HairSalon",
+    "name": "Good Hair Daye",
+    "description": "Washington D.C. boutique hair salon specializing in healthy hair, silk presses, and premium extension installation for all hair textures.",
+    "url": "{{ SITE_URL }}",
+    "email": "Goodhair.daye@yahoo.com",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "470 L'Enfant Plaza Center, Unit 429",
+      "addressLocality": "Washington",
+      "addressRegion": "DC",
+      "postalCode": "20024",
+      "addressCountry": "US"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 38.8839,
+      "longitude": -77.0224
+    },
+    "openingHoursSpecification": {
+      "@type": "OpeningHoursSpecification",
+      "description": "By appointment only"
+    },
+    "priceRange": "$$",
+    "sameAs": [
+      "https://instagram.com/goodhairdaye_dc",
+      "https://www.tiktok.com/@good.hair.daye"
+    ],
+    "image": "{{ SITE_URL }}{% static 'images/logo.png' %}"
+  }
+  </script>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -38,10 +90,27 @@
   </script>
 
   <!-- Site CSS -->
-  <link rel="stylesheet" href="{% static 'css/main.css' %}?v=25" />
+  <link rel="stylesheet" href="{% static 'css/main.css' %}?v=27" />
   {% block extra_head %}{% endblock %}
+
+  <!-- PayPal JS SDK -->
+  {% if PAYPAL_CLIENT_ID %}
+  <script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=USD&intent=capture" data-namespace="paypal"></script>
+  {% endif %}
 </head>
 <body>
+
+  <!-- ══ BANNER ALERT ════════════════════════════════════════ -->
+  {% if active_banner %}
+  <div class="site-banner site-banner--{{ active_banner.style }}" role="alert">
+    <span class="site-banner-msg">{{ active_banner.message }}</span>
+    {% if active_banner.link_text and active_banner.link_url %}
+    <a href="{{ active_banner.link_url }}" class="site-banner-btn">{{ active_banner.link_text }}</a>
+    {% endif %}
+    <button class="site-banner-close" onclick="this.closest('.site-banner').style.display='none'" aria-label="Dismiss">✕</button>
+  </div>
+  {% endif %}
+  <!-- ══ END BANNER ALERT ════════════════════════════════════ -->
 
   <!-- ══ HEADER ══════════════════════════════════════════════ -->
   <header class="site-header">
@@ -49,11 +118,11 @@
       <div class="flex items-center justify-between py-4">
 
         <!-- Logo + Name + Slogan -->
-        <a href="{% url 'pages:home' %}" class="flex items-center gap-4 shrink-0">
-          <img src="{% static 'images/logo.png' %}" alt="Good Hair Daye" style="height: 56px; width: auto;" />
+        <a href="{% url 'pages:home' %}" class="flex items-center gap-3 shrink-0">
+          <img src="{% static 'images/logo.png' %}" alt="Good Hair Daye" class="logo-img" style="height: 56px; width: auto;" />
           <div class="flex flex-col justify-center">
-            <span style="font-family: var(--font-display); font-size: 1rem; font-weight: 400; letter-spacing: 0.05em; color: var(--color-white); line-height: 1.2;">Good Hair Daye</span>
-            <span class="text-slogan" style="color: var(--color-tan);">make everyday a good hair daye</span>
+            <span class="brand-name" style="font-family: var(--font-display); font-size: 1rem; font-weight: 400; letter-spacing: 0.05em; color: var(--color-white); line-height: 1.2;">Good Hair Daye</span>
+            <span class="brand-slogan text-slogan" style="color: var(--color-tan);">make everyday a good hair daye</span>
           </div>
         </a>
 
@@ -68,10 +137,10 @@
         </nav>
 
         <!-- Hamburger (mobile) -->
-        <button id="hamburger" class="hamburger flex-col gap-1.5 p-2" aria-label="Toggle menu" aria-expanded="false">
-          <span class="block w-6 h-0.5" style="background-color: var(--color-tan);"></span>
-          <span class="block w-6 h-0.5" style="background-color: var(--color-tan);"></span>
-          <span class="block w-6 h-0.5" style="background-color: var(--color-tan);"></span>
+        <button id="hamburger" class="hamburger" aria-label="Toggle menu" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
         </button>
       </div>
     </div>
@@ -117,6 +186,7 @@
           <a href="{% url 'pages:gallery' %}"  class="footer-link">Style Gallery</a>
           <a href="{% url 'booking:index' %}" class="footer-link" onclick="event.preventDefault(); Booking.open();">Book Now</a>
           <a href="{% url 'shop:index' %}"     class="footer-link">Shop</a>
+          <a href="/admin/"                    class="footer-link">Admin</a>
         </div>
 
         <!-- Legal -->
@@ -142,6 +212,7 @@
       <div class="border-t pt-6" style="border-color: var(--color-mid);">
         <p class="text-center text-xs" style="color: var(--color-mid); letter-spacing: 0.08em;">
           &copy; {% now "Y" %} Good Hair Daye &mdash; Washington, D.C. &nbsp;|&nbsp; All rights reserved.
+          &nbsp;&nbsp;<a href="/admin/" style="color:transparent;font-size:0.5rem;user-select:none;" tabindex="-1" aria-hidden="true">&#9670;</a>
         </p>
       </div>
     </div>

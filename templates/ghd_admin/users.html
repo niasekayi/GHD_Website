@@ -1,0 +1,133 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Users — GHD Admin{% endblock %}
+{% block nav_users %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .user-card {
+    background: var(--white);
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    padding: 1.1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .user-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--beige);
+    border: 1px solid var(--tan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--dark-brown);
+    flex-shrink: 0;
+    text-transform: uppercase;
+  }
+  .user-info { flex: 1; }
+  .user-name { font-weight: 500; font-size: 0.95rem; color: var(--dark); }
+  .user-meta { font-size: 0.75rem; color: var(--mid); margin-top: 0.1rem; }
+  .user-you  { font-size: 0.65rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brown); margin-left: 0.5rem; }
+
+  .add-user-form {
+    background: var(--cream);
+    border: 2px dashed var(--tan);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    display: none;
+  }
+  .add-user-form.open { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Admin Users</h1>
+  <button class="adm-btn adm-btn-primary" onclick="toggleForm()">+ Add User</button>
+</div>
+
+<div style="font-size:0.78rem;color:var(--mid);margin-bottom:1.5rem;">
+  These accounts have full access to this admin panel. Only add people you trust.
+</div>
+
+{% for u in staff_users %}
+<div class="user-card" id="user-card-{{ u.id }}">
+  <div class="user-avatar">{{ u.username|slice:":1" }}</div>
+  <div class="user-info">
+    <div class="user-name">
+      {{ u.get_full_name|default:u.username }}
+      {% if u.id == request.user.id %}<span class="user-you">You</span>{% endif %}
+    </div>
+    <div class="user-meta">@{{ u.username }}{% if u.email %} · {{ u.email }}{% endif %}</div>
+  </div>
+  {% if u.id != request.user.id %}
+  <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;"
+          onclick="deleteUser({{ u.id }}, '{{ u.username|escapejs }}')">Remove</button>
+  {% endif %}
+</div>
+{% empty %}
+<div class="adm-card adm-empty">No admin users found.</div>
+{% endfor %}
+
+<!-- Add user form -->
+<div class="add-user-form" id="add-user-form">
+  <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1.25rem;">New Admin Account</div>
+  <div class="adm-field-row">
+    <div class="adm-field">
+      <label class="adm-label">Full Name</label>
+      <input class="adm-input" id="new-user-name" />
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Username *</label>
+      <input class="adm-input" id="new-user-username" autocomplete="off" />
+    </div>
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Password *</label>
+    <input class="adm-input" type="password" id="new-user-password" autocomplete="new-password" />
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.75rem;">
+    <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleForm()">Cancel</button>
+    <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addUser()">Create Account</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function toggleForm() {
+    document.getElementById('add-user-form').classList.toggle('open');
+  }
+
+  async function addUser() {
+    const name     = document.getElementById('new-user-name').value.trim();
+    const username = document.getElementById('new-user-username').value.trim();
+    const password = document.getElementById('new-user-password').value;
+    if (!username || !password) { toast('Username and password are required.', true); return; }
+
+    const d = await admPost('/admin/api/users/add/', { name, username, password });
+    if (d.success) {
+      toast('Account created for @' + d.username);
+      location.reload();
+    } else {
+      toast(d.error || 'Error creating account', true);
+    }
+  }
+
+  async function deleteUser(id, username) {
+    if (!confirm('Remove @' + username + '? They will no longer be able to log in.')) return;
+    const d = await admPost('/admin/api/users/' + id + '/delete/', {});
+    if (d.success) {
+      toast('@' + username + ' removed');
+      document.getElementById('user-card-' + id)?.remove();
+    } else {
+      toast(d.error || 'Error removing user', true);
+    }
+  }
+</script>
+{% endblock %}

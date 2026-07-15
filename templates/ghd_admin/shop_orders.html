@@ -1,0 +1,204 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Shop Orders — GHD Admin{% endblock %}
+{% block nav_shop_orders %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .filter-tab {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--tan);
+    border-radius: 2rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--mid);
+    text-decoration: none;
+    transition: all 0.15s;
+    background: var(--white);
+  }
+  .filter-tab:hover { border-color: var(--brown); color: var(--dark); }
+  .filter-tab.active { background: var(--dark-brown); border-color: var(--dark-brown); color: #fff; }
+
+  .badge-processing { background: #dbeafe; color: #1e40af; }
+  .badge-shipped    { background: #e0e7ff; color: #3730a3; }
+  .badge-delivered  { background: #dcfce7; color: #166534; }
+  .badge-refunded   { background: #f3f4f6; color: #6b7280; }
+
+  .order-card {
+    background: var(--white);
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .order-card:hover { border-color: var(--brown); }
+
+  .order-card-header {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+  }
+  .order-info-main { min-width: 0; }
+  .order-number { font-weight: 500; font-size: 0.95rem; color: var(--dark); }
+  .order-customer { font-size: 0.8rem; color: var(--mid); margin-top: 0.1rem; }
+  .order-date { font-size: 0.75rem; color: var(--brown); margin-top: 0.15rem; }
+  .order-total { font-size: 0.95rem; font-weight: 600; color: var(--dark); text-align: right; }
+
+  .order-badges { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-end; }
+  .order-expand-btn { font-size: 0.75rem; color: var(--mid); padding: 0.25rem; transition: transform 0.2s; }
+  .order-card.expanded .order-expand-btn { transform: rotate(180deg); }
+
+  .order-detail {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid var(--beige);
+  }
+  .order-card.expanded .order-detail { display: block; }
+
+  .order-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+  }
+  .order-detail-field label { font-size: 0.62rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--mid); display: block; margin-bottom: 0.2rem; }
+  .order-detail-field span { font-size: 0.85rem; color: var(--dark); }
+
+  .order-items-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.82rem; }
+  .order-items-table th { text-align: left; padding: 0.4rem 0; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--mid); border-bottom: 1px solid var(--tan); }
+  .order-items-table td { padding: 0.5rem 0; border-bottom: 1px solid var(--beige); color: var(--dark); }
+
+  .order-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem; }
+  .order-status-select { padding: 0.35rem 0.6rem; border: 1px solid var(--tan); border-radius: 2px; font-size: 0.78rem; font-family: inherit; background: var(--white); color: var(--dark); outline: none; }
+  .order-status-select:focus { border-color: var(--brown); }
+
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--mid); font-size: 0.85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Shop Orders</h1>
+</div>
+
+<div class="filter-tabs">
+  <a href="/admin/shop/orders/"                   class="filter-tab {% if filter == 'all' %}active{% endif %}">All</a>
+  <a href="/admin/shop/orders/?filter=pending"     class="filter-tab {% if filter == 'pending' %}active{% endif %}">Pending</a>
+  <a href="/admin/shop/orders/?filter=paid"        class="filter-tab {% if filter == 'paid' %}active{% endif %}">Paid</a>
+  <a href="/admin/shop/orders/?filter=processing"  class="filter-tab {% if filter == 'processing' %}active{% endif %}">Processing</a>
+  <a href="/admin/shop/orders/?filter=shipped"     class="filter-tab {% if filter == 'shipped' %}active{% endif %}">Shipped</a>
+  <a href="/admin/shop/orders/?filter=delivered"   class="filter-tab {% if filter == 'delivered' %}active{% endif %}">Delivered</a>
+  <a href="/admin/shop/orders/?filter=cancelled"   class="filter-tab {% if filter == 'cancelled' %}active{% endif %}">Cancelled</a>
+</div>
+
+{% if orders %}
+{% for o in orders %}
+<div class="order-card" id="order-{{ o.id }}">
+  <div class="order-card-header" onclick="toggleOrder({{ o.id }})">
+    <div class="order-info-main">
+      <div class="order-number">{{ o.order_number }}</div>
+      <div class="order-customer">{{ o.customer_name }} &middot; {{ o.customer_email }}</div>
+      <div class="order-date">{{ o.created_at|date:"M j, Y g:i A" }}</div>
+    </div>
+    <div class="order-total">${{ o.total }}</div>
+    <div class="order-badges">
+      <span class="badge badge-{{ o.status }}">{{ o.get_status_display }}</span>
+      <span class="badge badge-{{ o.payment_status }}">{{ o.get_payment_status_display }}</span>
+    </div>
+  </div>
+
+  <div class="order-detail" id="detail-{{ o.id }}">
+    <div class="order-detail-grid">
+      <div class="order-detail-field">
+        <label>Phone</label>
+        <span>{{ o.customer_phone }}</span>
+      </div>
+      <div class="order-detail-field">
+        <label>Shipping Address</label>
+        <span>{{ o.shipping_address_line1 }}{% if o.shipping_address_line2 %}, {{ o.shipping_address_line2 }}{% endif %}, {{ o.shipping_city }}, {{ o.shipping_state }} {{ o.shipping_zip }}</span>
+      </div>
+      {% if o.paypal_order_id %}
+      <div class="order-detail-field">
+        <label>PayPal Order</label>
+        <span style="font-size:0.72rem;word-break:break-all;">{{ o.paypal_order_id }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <table class="order-items-table">
+      <thead>
+        <tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Line Total</th></tr>
+      </thead>
+      <tbody>
+        {% for item in o.items.all %}
+        <tr>
+          <td>
+            {{ item.product_name }}
+            {% if item.selected_options %}<div style="font-size:0.7rem;color:var(--mid);margin-top:0.15rem;">{{ item.selected_options }}</div>{% endif %}
+          </td>
+          <td>{{ item.quantity }}</td>
+          <td>${{ item.unit_price }}</td>
+          <td>${{ item.line_total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="order-actions">
+      <label style="font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">Status</label>
+      <select class="order-status-select" id="status-{{ o.id }}">
+        {% for value, label in o.STATUS_CHOICES %}
+        <option value="{{ value }}" {% if o.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--mid);">
+        <input type="checkbox" id="notify-{{ o.id }}" checked /> Notify customer
+      </label>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveOrderStatus({{ o.id }})">Save</button>
+      <span id="saved-{{ o.id }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;">Saved</span>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">No orders found{% if filter != 'all' %} for this status{% endif %}.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function toggleOrder(id) {
+    document.getElementById('order-' + id).classList.toggle('expanded');
+  }
+
+  async function saveOrderStatus(id) {
+    const status = document.getElementById('status-' + id).value;
+    const notify = document.getElementById('notify-' + id).checked;
+    const d = await admPost('/admin/api/shop/orders/' + id + '/update-status/', { status, notify_customer: notify });
+    if (d.success) {
+      const el = document.getElementById('saved-' + id);
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 1800);
+      const badge = document.querySelector('#order-' + id + ' .badge');
+      if (badge) {
+        badge.className = 'badge badge-' + status;
+        badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    } else {
+      toast(d.error || 'Error saving', true);
+    }
+  }
+</script>
+{% endblock %}

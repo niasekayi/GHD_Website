@@ -1,5 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Services & Pricing | Good Hair Daye{% endblock %}
+{% block title %}Services & Pricing | Good Hair Daye — D.C. Hair Salon{% endblock %}
+{% block meta_description %}View all hair services and pricing at Good Hair Daye in Washington D.C. — silk presses, blow-outs, extensions, braids, color, and more. Book online today.{% endblock %}
+{% block og_title %}Services & Pricing | Good Hair Daye — Washington D.C.{% endblock %}
+{% block og_description %}Hair salon services and pricing in Washington D.C. — silk presses, extensions, color, and more. Located inside L'Enfant Plaza.{% endblock %}
 {% block nav_services %}active{% endblock %}
 
 {% block content %}
@@ -20,7 +23,6 @@
     {% for category in categories %}
     <div class="mb-10">
       <p class="mb-5" style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.75rem;">{{ category }}</p>
-
       <div class="flex flex-col">
         {% for service in services %}{% if service.category == category %}
         <button class="service-row" onclick="openModal(this)"
@@ -30,11 +32,8 @@
           data-price="{{ service.price }}"
           data-duration="{{ service.duration }}"
           data-description="{{ service.description }}"
-          data-is-addon="{% if service.is_addon %}true{% else %}false{% endif %}">
-          <span class="service-row-name">
-            {{ service.name }}
-            {% if service.is_addon %}<span class="service-addon-tag">Add-On</span>{% endif %}
-          </span>
+          data-is-addon="false">
+          <span class="service-row-name">{{ service.name }}</span>
           <span class="service-row-meta">
             <span class="service-row-duration">{{ service.duration }}</span>
             <span class="service-row-price">{{ service.price }}</span>
@@ -45,6 +44,35 @@
       </div>
     </div>
     {% endfor %}
+
+    {% if addons %}
+    <div class="mb-10">
+      <p class="mb-2" style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 500; letter-spacing: 0.08em; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.75rem;">Add-Ons</p>
+      <p class="mb-5" style="font-size: 0.8rem; color: var(--color-mid); letter-spacing: 0.04em;">Select add-ons when booking your main service.</p>
+      <div class="flex flex-col">
+        {% for service in addons %}
+        <button class="service-row" onclick="openModal(this)"
+          data-id="{{ service.id }}"
+          data-name="{{ service.name }}"
+          data-category="{{ service.category }}"
+          data-price="{{ service.price }}"
+          data-duration="{{ service.duration }}"
+          data-description="{{ service.description }}"
+          data-is-addon="true">
+          <span class="service-row-name">
+            {{ service.name }}
+            <span class="service-addon-tag">Add-On</span>
+          </span>
+          <span class="service-row-meta">
+            <span class="service-row-duration">{{ service.duration }}</span>
+            <span class="service-row-price">{{ service.price }}</span>
+            <span class="service-row-arrow">→</span>
+          </span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
   </div>
 </section>
@@ -225,7 +253,7 @@
       bookArea.innerHTML = `
         <div style="background:#F5F0E8;border:1px solid #D9CEBF;padding:14px 18px;text-align:center;">
           <p style="margin:0;font-family:var(--font-sans);font-size:0.8rem;color:var(--color-mid);line-height:1.6;">
-            This is an <strong>add-on service</strong>. Please mention it in the notes when booking your main service, or <a href="mailto:Goodhair.daye@yahoo.com" style="color:var(--color-brown);">contact us</a> to add it to an existing appointment.
+            This is an <strong>add-on service</strong>. Please select when booking.
           </p>
         </div>`;
     } else {

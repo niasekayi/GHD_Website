@@ -1,11 +1,49 @@
 {% extends "base.html" %}
 {% block title %}Terms & Conditions | Good Hair Daye{% endblock %}
+{% block meta_description %}Terms and Conditions for Good Hair Daye — please read before using our website or services.{% endblock %}
 
 {% block content %}
 <section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
   <div class="container-site max-w-2xl">
-    <h1 class="text-heading-xl mb-8">Terms & Conditions</h1>
-    <p class="text-body">Terms and conditions content coming soon.</p>
+
+    <h1 class="text-heading-xl mb-3">Terms &amp; Conditions</h1>
+    <p class="text-body mb-10" style="color: var(--color-mid); font-size: 0.82rem; letter-spacing: 0.04em;">Last updated: June 2025</p>
+
+    <p class="text-body mb-6">
+      This website is operated by All Things Good LLC. Throughout the site, the terms "we", "us" and "our" refer to
+      All Things Good LLC. All Things Good LLC offers this website, including all information, tools and services
+      available from this site to you, the user, conditioned upon your acceptance of all terms, conditions, policies
+      and notices stated here.
+    </p>
+    <p class="text-body mb-6">
+      By visiting our site and/or purchasing something from us, you engage in our "Service" and agree to be bound
+      by the following terms and conditions ("Terms of Service", "Terms"), including those additional terms and
+      conditions and policies referenced herein and/or available by hyperlink. These Terms of Service apply to all
+      users of the site, including without limitation users who are browsers, vendors, customers, merchants, and/or
+      contributors of content.
+    </p>
+    <p class="text-body mb-6">
+      Please read these Terms of Service carefully before accessing or using our website. By accessing or using any
+      part of the site, you agree to be bound by these Terms of Service. If you do not agree to all the terms and
+      conditions of this agreement, then you may not access the website or use any services. If these Terms of
+      Service are considered an offer, acceptance is expressly limited to these Terms of Service.
+    </p>
+    <p class="text-body mb-10">
+      Any new features or tools which are added to the current store shall also be subject to the Terms of Service.
+      We reserve the right to update, change or replace any part of these Terms of Service by posting updates and/or
+      changes to our website. It is your responsibility to check this page periodically for changes. Your continued
+      use of or access to the website following the posting of any changes constitutes acceptance of those changes.
+    </p>
+
+    {% for section in sections %}
+    <div class="mb-8">
+      <h2 class="mb-4" style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 500; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.6rem;">
+        {{ section.title }}
+      </h2>
+      <p class="text-body" style="white-space: pre-line;">{{ section.body }}</p>
+    </div>
+    {% endfor %}
+
   </div>
 </section>
 {% endblock %}

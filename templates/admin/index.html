@@ -1,0 +1,177 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<style>
+  .ghd-dash { max-width: 1100px; }
+
+  .ghd-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .ghd-stat {
+    background: #fff;
+    border: 1px solid #DDD0C8;
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+  }
+  .ghd-stat-num  { font-size: 2.5rem; font-weight: 300; color: #7A5A4C; line-height: 1; }
+  .ghd-stat-lbl  { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #A09088; margin-top: 0.35rem; }
+
+  .ghd-section { margin-bottom: 2rem; }
+  .ghd-section h2 {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #A8897A;
+    border-bottom: 1px solid #DDD0C8;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .ghd-appt-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .ghd-appt-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #A09088;
+    border-bottom: 1px solid #DDD0C8;
+  }
+  .ghd-appt-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #F4EDE7; }
+  .ghd-appt-table tr:last-child td { border-bottom: none; }
+  .ghd-appt-table tr:hover td { background: #FAF8F5; }
+  .ghd-appt-empty { color: #A09088; font-style: italic; font-size: 0.85rem; padding: 0.75rem 0; }
+
+  .ghd-status { font-weight: 600; }
+  .ghd-status.confirmed { color: #2e7d32; }
+  .ghd-status.pending   { color: #b45309; }
+
+  .ghd-quick { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .ghd-quick a {
+    display: inline-block;
+    padding: 0.6rem 1.25rem;
+    background: #7A5A4C;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .ghd-quick a:hover { background: #5C4840; }
+  .ghd-quick a.outline {
+    background: transparent;
+    color: #7A5A4C;
+    border: 1px solid #A8897A;
+  }
+  .ghd-quick a.outline:hover { background: #F4EDE7; }
+</style>
+
+<div class="ghd-dash">
+
+  <!-- Stats row -->
+  <div class="ghd-stats">
+    <div class="ghd-stat">
+      <div class="ghd-stat-num">{{ today_appts|length }}</div>
+      <div class="ghd-stat-lbl">Today</div>
+    </div>
+    <div class="ghd-stat">
+      <div class="ghd-stat-num">{{ week_count }}</div>
+      <div class="ghd-stat-lbl">This Week</div>
+    </div>
+    <div class="ghd-stat">
+      <div class="ghd-stat-num">{{ pending_count }}</div>
+      <div class="ghd-stat-lbl">Pending Confirmation</div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="ghd-section">
+    <h2>Quick Actions</h2>
+    <div class="ghd-quick">
+      <a href="{% url 'admin:booking_blockeddate_add' %}">+ Block a Date</a>
+      <a href="{% url 'admin:booking_workschedule_changelist' %}" class="outline">Edit Hours</a>
+      <a href="{% url 'admin:services_service_add' %}">+ Add Service</a>
+      <a href="{% url 'admin:shop_shopitem_add' %}">+ Add Shop Item</a>
+      <a href="{% url 'admin:pages_banneralert_add' %}">+ Add Banner</a>
+      <a href="{% url 'admin:booking_appointment_changelist' %}" class="outline">All Appointments</a>
+    </div>
+  </div>
+
+  <!-- Today's appointments -->
+  <div class="ghd-section">
+    <h2>Today — {{ today|date:"l, F j" }}</h2>
+    {% if today_appts %}
+    <table class="ghd-appt-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Client</th>
+          <th>Service</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in today_appts %}
+        <tr>
+          <td>{{ appt.start_time|time:"g:i A" }}</td>
+          <td>{{ appt.client_name }}</td>
+          <td>{% if appt.service %}{{ appt.service.name }}{% else %}Consultation{% endif %}</td>
+          <td><span class="ghd-status {{ appt.status }}">{{ appt.get_status_display }}</span></td>
+          <td><a href="{% url 'admin:booking_appointment_change' appt.pk %}" style="font-size:0.75rem;">View →</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="ghd-appt-empty">No appointments today.</p>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming this week -->
+  <div class="ghd-section">
+    <h2>Upcoming This Week</h2>
+    {% if upcoming_appts %}
+    <table class="ghd-appt-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Client</th>
+          <th>Service</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for appt in upcoming_appts %}
+        <tr>
+          <td>{{ appt.date|date:"D, M j" }}</td>
+          <td>{{ appt.start_time|time:"g:i A" }}</td>
+          <td>{{ appt.client_name }}</td>
+          <td>{% if appt.service %}{{ appt.service.name }}{% else %}Consultation{% endif %}</td>
+          <td><span class="ghd-status {{ appt.status }}">{{ appt.get_status_display }}</span></td>
+          <td><a href="{% url 'admin:booking_appointment_change' appt.pk %}" style="font-size:0.75rem;">View →</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="ghd-appt-empty">No upcoming appointments this week.</p>
+    {% endif %}
+  </div>
+
+  <!-- Standard Django app list -->
+  <div class="ghd-section">
+    <h2>All Sections</h2>
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,662 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Shop Products — GHD Admin{% endblock %}
+{% block nav_shop_products %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .svc-cat { margin-bottom: 2rem; }
+  .svc-cat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.75rem 1.25rem; background: var(--beige);
+    border: 1px solid var(--tan); border-radius: 4px 4px 0 0; border-bottom: none;
+  }
+  .svc-cat-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); }
+  .svc-cat-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+  .svc-row {
+    background: var(--white); border: 1px solid var(--tan); border-top: none;
+    padding: 1rem 1.25rem; display: grid; grid-template-columns: 56px 1fr auto;
+    gap: 1rem; align-items: center;
+  }
+  .svc-row:last-child { border-radius: 0 0 4px 4px; }
+  .prod-thumb { width: 56px; height: 56px; border-radius: 4px; object-fit: cover; background: var(--beige); border: 1px solid var(--tan); }
+  .prod-thumb-placeholder { width: 56px; height: 56px; border-radius: 4px; background: var(--beige); border: 1px solid var(--tan); display: flex; align-items: center; justify-content: center; color: var(--tan); font-size: 1.2rem; }
+  .svc-name { font-weight: 500; font-size: 0.95rem; color: var(--dark); margin-bottom: 0.2rem; }
+  .svc-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--mid); flex-wrap: wrap; }
+  .svc-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+  .svc-edit-drawer { display: none; border: 1px solid var(--tan); border-top: none; background: var(--cream); padding: 1.25rem; }
+  .svc-edit-drawer.open { display: block; }
+
+  .add-svc-form { background: var(--cream); border: 2px dashed var(--tan); border-radius: 4px; padding: 1.25rem; margin-top: 0.5rem; display: none; }
+  .add-svc-form.open { display: block; }
+  .add-cat-form { background: var(--cream); border: 2px dashed var(--tan); border-radius: 4px; padding: 1.25rem; margin-bottom: 1.5rem; display: none; }
+  .add-cat-form.open { display: block; }
+
+  /* Options & Photos */
+  .drawer-subsection { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px dashed var(--tan); }
+  .drawer-subsection-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .opt-group { background: var(--white); border: 1px solid var(--tan); border-radius: 4px; padding: 0.85rem 1rem; margin-bottom: 0.75rem; }
+  .opt-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+  .opt-group-name { font-weight: 500; font-size: 0.85rem; color: var(--dark); }
+  .opt-value-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; font-size: 0.8rem; }
+  .opt-value-label { flex: 1; color: var(--dark); }
+  .opt-value-price { width: 80px; flex: none; padding: 0.25rem 0.4rem; font-size: 0.78rem; border: 1px solid var(--tan); border-radius: 2px; font-family: var(--font-sans); }
+  .opt-value-price:focus { outline: none; border-color: var(--brown); }
+  .opt-value-del { background: none; border: none; color: var(--mid); cursor: pointer; font-size: 0.8rem; }
+  .opt-value-del:hover { color: #b45309; }
+  .add-value-row { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+  .add-value-row input { flex: 1; }
+  .add-value-row input.delta-input { flex: none; width: 90px; }
+
+  .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 0.75rem; margin-bottom: 0.75rem; }
+  .photo-thumb-wrap { border: 1px solid var(--tan); border-radius: 4px; overflow: hidden; background: var(--white); }
+  .photo-thumb-wrap img { width: 100%; height: 90px; object-fit: cover; display: block; }
+  .photo-thumb-meta { padding: 0.4rem; display: flex; flex-direction: column; gap: 0.3rem; }
+  .photo-thumb-meta select { font-size: 0.68rem; padding: 0.2rem 1.4rem 0.2rem 0.3rem; border: 1px solid var(--tan); border-radius: 2px; width: 100%; box-sizing: border-box; }
+  .photo-thumb-meta button { font-size: 0.65rem; color: var(--mid); background: none; border: none; cursor: pointer; text-align: left; }
+  .photo-thumb-meta button:hover { color: #b45309; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Shop Products</h1>
+  <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="toggleAddCatForm()">+ Add Category</button>
+</div>
+
+<div class="add-cat-form" id="add-cat-form">
+  <div class="adm-field-row">
+    <div class="adm-field">
+      <label class="adm-label">Category Name *</label>
+      <input class="adm-input" id="new-cat-name" placeholder="e.g. Hair Care" />
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
+    <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleAddCatForm()">Cancel</button>
+    <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addCategory()">Add Category</button>
+  </div>
+</div>
+
+{% for cat in categories %}
+<div class="svc-cat" id="cat-{{ cat.id }}">
+  <div class="svc-cat-header">
+    <span class="svc-cat-name" id="cat-name-{{ cat.id }}">{{ cat.name }}</span>
+    <div class="svc-cat-actions">
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="renameCategory({{ cat.id }})">Rename</button>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deleteCategory({{ cat.id }}, '{{ cat.name|escapejs }}')">Delete</button>
+      <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="toggleAddForm({{ cat.id }})">+ Add Product</button>
+    </div>
+  </div>
+
+  {% for product in cat.products.all %}
+
+  {# Embed product metadata for JS state init #}
+  {{ product.admin_payload|json_script:product.json_script_id }}
+
+  <div class="svc-row" id="prod-row-{{ product.id }}">
+    <div id="prod-thumb-wrap-{{ product.id }}">
+      {% if product.image %}<img class="prod-thumb" src="{{ product.image.url }}" alt="" />
+      {% else %}<div class="prod-thumb-placeholder"><i class="fas fa-box"></i></div>{% endif %}
+    </div>
+    <div class="svc-row-info">
+      <div class="svc-name">
+        <span id="prod-name-text-{{ product.id }}">{{ product.name }}</span>
+        {% if not product.is_active %}<span class="badge badge-inactive" style="margin-left:0.5rem;">Inactive</span>{% endif %}
+        {% if product.stock_quantity == 0 %}<span class="badge badge-inactive" style="margin-left:0.4rem;">Out of Stock</span>
+        {% elif product.stock_quantity < 5 %}<span class="badge badge-pending" style="margin-left:0.4rem;">Low Stock</span>{% endif %}
+      </div>
+      <div class="svc-meta">
+        <span id="prod-price-{{ product.id }}">${{ product.price }}</span>
+        <span id="prod-stock-{{ product.id }}">Stock: {{ product.stock_quantity }}</span>
+      </div>
+    </div>
+    <div class="svc-actions">
+      <label class="adm-toggle" title="{{ product.is_active|yesno:'Active,Inactive' }}">
+        <input type="checkbox" {% if product.is_active %}checked{% endif %}
+               onchange="toggleActive({{ product.id }}, this.checked)" />
+        <span class="adm-toggle-slider"></span>
+      </label>
+      <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="openEdit({{ product.id }})">Edit</button>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="deleteProduct({{ product.id }}, '{{ product.name|escapejs }}')" style="color:#b45309;">Delete</button>
+    </div>
+  </div>
+
+  <div class="svc-edit-drawer" id="edit-{{ product.id }}">
+    <!-- Core fields -->
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Product Name</label>
+        <input class="adm-input core-field" id="name-{{ product.id }}" value="{{ product.name }}" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Base Price ($)</label>
+        <input class="adm-input core-field" type="number" step="0.01" id="price-{{ product.id }}" value="{{ product.price }}" />
+      </div>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Stock Quantity</label>
+        <input class="adm-input core-field" type="number" id="stock-{{ product.id }}" value="{{ product.stock_quantity }}" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Replace Image (JPG/PNG)</label>
+        <input class="adm-input core-field" type="file" accept=".jpg,.jpeg,.png" id="image-{{ product.id }}" style="padding:0.3rem;" />
+      </div>
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Description</label>
+      <textarea class="adm-textarea core-field" id="desc-{{ product.id }}">{{ product.description }}</textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;align-items:center;">
+      <span id="saved-indicator-{{ product.id }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;margin-right:auto;">Saved</span>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="closeEdit({{ product.id }})">Close</button>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveProduct({{ product.id }})">Save Changes</button>
+    </div>
+
+    <!-- Options -->
+    <div class="drawer-subsection">
+      <div class="drawer-subsection-header">
+        <span class="adm-label" style="margin:0;">Options <span style="text-transform:none;font-weight:400;">(e.g. texture, length)</span></span>
+        <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="toggleAddGroupForm({{ product.id }})">+ Add Option Group</button>
+      </div>
+      <div class="add-svc-form" id="add-group-form-{{ product.id }}" style="margin-top:0;margin-bottom:0.75rem;">
+        <div class="adm-field-row">
+          <div class="adm-field">
+            <label class="adm-label">Group Name *</label>
+            <input class="adm-input" id="new-group-name-{{ product.id }}" placeholder="e.g. Hair Texture" />
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:0.5rem;">
+          <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleAddGroupForm({{ product.id }})">Cancel</button>
+          <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addOptionGroup({{ product.id }})">Add Group</button>
+        </div>
+      </div>
+      <div id="opt-groups-{{ product.id }}">
+        {% for group in product.option_groups.all %}
+        <div class="opt-group" id="opt-group-{{ group.id }}">
+          <div class="opt-group-header">
+            <span class="opt-group-name" id="opt-group-name-{{ group.id }}">{{ group.name }}</span>
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:var(--mid);cursor:pointer;" title="Check this if selecting a value in this group changes the price (e.g. Hair Length)">
+                <input type="checkbox" id="opt-group-price-flag-{{ group.id }}"
+                       {% if group.contributes_to_price %}checked{% endif %}
+                       onchange="savePriceFlag({{ group.id }}, this.checked)" />
+                Affects Price
+              </label>
+              <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="renameOptionGroup({{ group.id }}, {{ product.id }})">Rename</button>
+              <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deleteOptionGroup({{ group.id }}, {{ product.id }})">Delete Group</button>
+            </div>
+          </div>
+          {% if group.values.all %}
+          <div style="display:flex;gap:0.6rem;padding:0 0 0.25rem;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">
+            <span style="flex:1;">Value</span><span style="width:80px;flex:none;">Price adj. ($)</span><span style="width:24px;"></span>
+          </div>
+          {% endif %}
+          <div id="opt-values-{{ group.id }}">
+            {% for val in group.values.all %}
+            <div class="opt-value-row" id="opt-value-{{ val.id }}">
+              <span class="opt-value-label">{{ val.label }}</span>
+              <input class="opt-value-price" type="number" step="0.01" placeholder="0.00"
+                     value="{{ val.price_delta }}"
+                     title="Price added to base price when this is selected (leave 0 if no change)"
+                     onchange="saveValueDelta({{ val.id }}, this.value)" />
+              <button class="opt-value-del" onclick="deleteOptionValue({{ val.id }}, {{ group.id }}, {{ product.id }})">✕</button>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="add-value-row">
+            <input class="adm-input" placeholder="Value, e.g. Kinky Curly" id="new-value-label-{{ group.id }}" />
+            <input class="adm-input delta-input" type="number" step="0.01" placeholder="price adj." id="new-value-delta-{{ group.id }}" />
+            <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="addOptionValue({{ group.id }}, {{ product.id }})">+ Add</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Photos -->
+    <div class="drawer-subsection">
+      <div class="drawer-subsection-header">
+        <span class="adm-label" style="margin:0;">Additional Photos <span style="text-transform:none;font-weight:400;">(link to an option to swap photos)</span></span>
+      </div>
+      <div class="photo-grid" id="photo-grid-{{ product.id }}">
+        {% for img in product.gallery_images.all %}
+        <div class="photo-thumb-wrap" id="photo-{{ img.id }}">
+          <img src="{{ img.image.url }}" alt="" />
+          <div class="photo-thumb-meta">
+            <select id="photo-select-{{ img.id }}" onchange="updateImageOption({{ img.id }}, this.value, {{ product.id }})">
+              <option value="">Not linked</option>
+              {% for group in product.option_groups.all %}{% for val in group.values.all %}
+              <option value="{{ val.id }}" {% if img.option_value_id == val.id %}selected{% endif %}>{{ group.name }}: {{ val.label }}</option>
+              {% endfor %}{% endfor %}
+            </select>
+            <button onclick="deleteImage({{ img.id }}, {{ product.id }})">Delete</button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="adm-field-row">
+        <div class="adm-field">
+          <input class="adm-input" type="file" accept=".jpg,.jpeg,.png" id="new-photo-{{ product.id }}" style="padding:0.3rem;" />
+        </div>
+        <div class="adm-field" style="display:flex;align-items:flex-end;">
+          <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="addImage({{ product.id }})">+ Add Photo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% empty %}
+  <div class="svc-row" style="grid-template-columns:1fr;color:var(--mid);font-style:italic;font-size:0.85rem;">No products yet.</div>
+  {% endfor %}
+
+  <!-- Add product form -->
+  <div class="add-svc-form" id="add-form-{{ cat.id }}">
+    <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1rem;">New Product in {{ cat.name }}</div>
+    <div class="adm-field-row">
+      <div class="adm-field"><label class="adm-label">Product Name *</label><input class="adm-input" id="new-name-{{ cat.id }}" placeholder="e.g. Edge Control" /></div>
+      <div class="adm-field"><label class="adm-label">Price ($) *</label><input class="adm-input" type="number" step="0.01" id="new-price-{{ cat.id }}" placeholder="24.00" /></div>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field"><label class="adm-label">Stock Quantity</label><input class="adm-input" type="number" id="new-stock-{{ cat.id }}" value="0" /></div>
+      <div class="adm-field"><label class="adm-label">Product Image (JPG/PNG)</label><input class="adm-input" type="file" accept=".jpg,.jpeg,.png" id="new-image-{{ cat.id }}" style="padding:0.3rem;" /></div>
+    </div>
+    <div class="adm-field"><label class="adm-label">Description</label><textarea class="adm-textarea" id="new-desc-{{ cat.id }}" placeholder="Brief description shown to customers..."></textarea></div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleAddForm({{ cat.id }})">Cancel</button>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addProduct({{ cat.id }})">Add Product</button>
+    </div>
+  </div>
+</div>
+{% empty %}
+<div class="adm-card adm-empty">No categories yet. Add one above to get started.</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// ── State ────────────────────────────────────────────────────
+const shopState = {
+  dirty: {},       // productId → bool (unsaved core-field edits)
+  products: {},    // productId → {groups, variants, photos, base_price}
+};
+
+// Parse embedded JSON metadata for every product on page load
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[id^="product-meta-"]').forEach(function(el) {
+    const data = JSON.parse(el.textContent);
+    const pid = data.product_id;
+    shopState.products[pid] = {
+      base_price: data.base_price,
+      groups: data.groups,       // [{id, name, values: [{id, label, price_delta}]}]
+      variants: data.variants,   // [{id, value_ids, price}]
+      photos: data.photos,       // [{id, url, option_value_id}]
+    };
+    shopState.dirty[pid] = false;
+  });
+});
+
+// ── Option value price (per-value price adjustment) ──────────
+async function saveValueDelta(valueId, delta) {
+  const price_delta = parseFloat(delta) || 0;
+  const d = await admPost('/admin/api/shop/option-values/' + valueId + '/update/', { price_delta });
+  if (d.success) toast('Price updated');
+  else toast(d.error || 'Error updating price', true);
+}
+
+// ── Option group "Affects Price" toggle ───────────────────────
+async function savePriceFlag(groupId, checked) {
+  const d = await admPost('/admin/api/shop/options/' + groupId + '/update/', { contributes_to_price: checked });
+  if (d.success) toast(checked ? 'Group now affects price' : 'Group no longer affects price');
+  else toast(d.error || 'Error', true);
+}
+
+// ── Photo select rebuilder ────────────────────────────────────
+function regeneratePhotoSelects(productId) {
+  const s = shopState.products[productId];
+  if (!s) return;
+  const grid = document.getElementById('photo-grid-' + productId);
+  if (!grid) return;
+
+  grid.querySelectorAll('.photo-thumb-wrap').forEach(function(wrap) {
+    const sel = wrap.querySelector('select');
+    if (!sel) return;
+    const currentVal = sel.value;
+    let opts = '<option value="">Not linked</option>';
+    s.groups.forEach(function(g) {
+      g.values.forEach(function(v) {
+        const sel2 = currentVal == v.id ? ' selected' : '';
+        opts += `<option value="${v.id}"${sel2}>${g.name}: ${v.label}</option>`;
+      });
+    });
+    sel.innerHTML = opts;
+  });
+}
+
+// ── Drawer open/close with dirty guard ───────────────────────
+function openEdit(id) {
+  // Guard any currently open drawer
+  const currentOpen = document.querySelector('.svc-edit-drawer.open');
+  if (currentOpen && currentOpen.id !== 'edit-' + id) {
+    const openId = parseInt(currentOpen.id.replace('edit-', ''), 10);
+    if (shopState.dirty[openId]) {
+      if (!confirm('You have unsaved changes. Click OK to save and close, or Cancel to keep editing.')) return;
+      saveProduct(openId, true);
+      return;
+    }
+    currentOpen.classList.remove('open');
+  }
+  shopState.dirty[id] = false;
+  document.getElementById('edit-' + id).classList.add('open');
+  attachDirtyTracking(id);
+}
+
+function attachDirtyTracking(id) {
+  document.getElementById('edit-' + id).querySelectorAll('.core-field').forEach(function(el) {
+    if (!el._dirtyBound) {
+      el.addEventListener('input',  function() { shopState.dirty[id] = true; });
+      el.addEventListener('change', function() { shopState.dirty[id] = true; });
+      el._dirtyBound = true;
+    }
+  });
+}
+
+async function closeEdit(id) {
+  if (shopState.dirty[id]) {
+    if (!confirm('You have unsaved changes. Click OK to save and close, or Cancel to keep editing.')) return;
+    const ok = await saveProduct(id, true);
+    if (!ok) return;
+  }
+  document.getElementById('edit-' + id).classList.remove('open');
+  shopState.dirty[id] = false;
+}
+
+async function saveProduct(id, autoClose) {
+  const fd = new FormData();
+  fd.append('csrfmiddlewaretoken', getCsrf());
+  const name  = document.getElementById('name-'  + id).value;
+  const price = document.getElementById('price-' + id).value;
+  const stock = document.getElementById('stock-' + id).value;
+  const desc  = document.getElementById('desc-'  + id).value;
+  fd.append('name', name); fd.append('price', price);
+  fd.append('stock_quantity', stock); fd.append('description', desc);
+  const imageInput = document.getElementById('image-' + id);
+  if (imageInput.files[0]) fd.append('image', imageInput.files[0]);
+
+  try {
+    const r = await fetch('/admin/api/shop/products/' + id + '/update/', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (d.success) {
+      shopState.dirty[id] = false;
+
+      // Update row display in place
+      document.getElementById('prod-name-text-' + id).textContent = name;
+      document.getElementById('prod-price-' + id).textContent = '$' + parseFloat(price).toFixed(2);
+      document.getElementById('prod-stock-' + id).textContent = 'Stock: ' + stock;
+
+      // Update stock badges
+      const nameCell = document.querySelector('#prod-row-' + id + ' .svc-name');
+      nameCell.querySelectorAll('.badge').forEach(b => b.remove());
+      const isActive = document.querySelector('#prod-row-' + id + ' .adm-toggle input').checked;
+      if (!isActive) _appendBadge(nameCell, 'badge-inactive', 'Inactive', '0.5rem');
+      const qty = parseInt(stock, 10);
+      if (qty === 0) _appendBadge(nameCell, 'badge-inactive', 'Out of Stock', '0.4rem');
+      else if (qty < 5) _appendBadge(nameCell, 'badge-pending', 'Low Stock', '0.4rem');
+
+      // Update thumbnail if new image uploaded
+      if (d.image_url) {
+        document.getElementById('prod-thumb-wrap-' + id).innerHTML =
+          `<img class="prod-thumb" src="${d.image_url}" alt="" />`;
+        imageInput.value = '';
+      }
+
+      // Update base_price in registry
+      if (shopState.products[id]) {
+        shopState.products[id].base_price = parseFloat(price);
+      }
+
+      // Show "Saved" indicator
+      const ind = document.getElementById('saved-indicator-' + id);
+      if (ind) { ind.style.opacity = '1'; setTimeout(() => ind.style.opacity = '0', 2000); }
+
+      if (autoClose) document.getElementById('edit-' + id).classList.remove('open');
+      toast('Saved!');
+      return true;
+    } else {
+      toast(d.error || 'Error saving', true); return false;
+    }
+  } catch (e) { toast('Request failed', true); return false; }
+}
+
+function _appendBadge(parent, cls, text, ml) {
+  const span = document.createElement('span');
+  span.className = 'badge ' + cls;
+  span.style.marginLeft = ml;
+  span.textContent = text;
+  parent.appendChild(span);
+}
+
+// ── Categories ────────────────────────────────────────────────
+function toggleAddCatForm() { document.getElementById('add-cat-form').classList.toggle('open'); }
+function toggleAddForm(catId) {
+  const f = document.getElementById('add-form-' + catId);
+  f.classList.toggle('open');
+  if (f.classList.contains('open')) setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+}
+
+async function addCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  if (!name) { toast('Category name is required.', true); return; }
+  const d = await admPost('/admin/api/shop/categories/add/', { name });
+  if (d.success) { toast('Category added!'); location.reload(); }
+  else toast(d.error || 'Error', true);
+}
+async function renameCategory(id) {
+  const cur = document.getElementById('cat-name-' + id).textContent.trim();
+  const name = prompt('Rename category:', cur);
+  if (!name || !name.trim() || name.trim() === cur) return;
+  const d = await admPost('/admin/api/shop/categories/' + id + '/update/', { name: name.trim() });
+  if (d.success) { toast('Renamed'); document.getElementById('cat-name-' + id).textContent = name.trim(); }
+  else toast(d.error || 'Error', true);
+}
+async function deleteCategory(id, name) {
+  if (!confirm('Delete "' + name + '"? Category must have no products.')) return;
+  const d = await admPost('/admin/api/shop/categories/' + id + '/delete/', {});
+  if (d.success) { toast('Deleted'); location.reload(); } else toast(d.error || 'Error', true);
+}
+
+// ── Products ──────────────────────────────────────────────────
+async function toggleActive(id, active) {
+  const fd = new FormData();
+  fd.append('csrfmiddlewaretoken', getCsrf());
+  fd.append('is_active', active ? 'true' : 'false');
+  const r = await fetch('/admin/api/shop/products/' + id + '/update/', { method: 'POST', body: fd });
+  const d = await r.json();
+  if (d.success) toast(active ? 'Product activated' : 'Deactivated');
+  else toast(d.error || 'Error', true);
+}
+
+async function addProduct(catId) {
+  const name  = document.getElementById('new-name-'  + catId).value.trim();
+  const price = document.getElementById('new-price-' + catId).value.trim();
+  if (!name || !price) { toast('Name and price are required.', true); return; }
+  const fd = new FormData();
+  fd.append('csrfmiddlewaretoken', getCsrf());
+  fd.append('category_id', catId); fd.append('name', name); fd.append('price', price);
+  fd.append('stock_quantity', document.getElementById('new-stock-' + catId).value || 0);
+  fd.append('description', document.getElementById('new-desc-' + catId).value);
+  const file = document.getElementById('new-image-' + catId).files[0];
+  if (file) fd.append('image', file);
+  const r = await fetch('/admin/api/shop/products/add/', { method: 'POST', body: fd });
+  const d = await r.json();
+  if (d.success) { toast('Product added!'); location.reload(); }
+  else toast(d.error || 'Error', true);
+}
+
+async function deleteProduct(id, name) {
+  if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+  const d = await admPost('/admin/api/shop/products/' + id + '/delete/', {});
+  if (d.success) {
+    toast('Deleted');
+    document.getElementById('prod-row-' + id)?.remove();
+    document.getElementById('edit-' + id)?.remove();
+    document.getElementById('product-meta-' + id)?.remove();
+  } else toast('Error', true);
+}
+
+// ── Option Groups ─────────────────────────────────────────────
+function toggleAddGroupForm(pid) { document.getElementById('add-group-form-' + pid).classList.toggle('open'); }
+
+async function addOptionGroup(productId) {
+  const input = document.getElementById('new-group-name-' + productId);
+  const name = input.value.trim();
+  if (!name) { toast('Group name is required.', true); return; }
+  const d = await admPost('/admin/api/shop/products/' + productId + '/options/add/', { name });
+  if (!d.success) { toast(d.error || 'Error', true); return; }
+
+  // Update registry
+  const newGroup = { id: d.id, name: d.name, values: [] };
+  shopState.products[productId].groups.push(newGroup);
+
+  // Append group block to DOM
+  const container = document.getElementById('opt-groups-' + productId);
+  const div = document.createElement('div');
+  div.className = 'opt-group'; div.id = 'opt-group-' + d.id;
+  div.innerHTML = `
+    <div class="opt-group-header">
+      <span class="opt-group-name" id="opt-group-name-${d.id}">${d.name}</span>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.72rem;color:var(--mid);cursor:pointer;" title="Check this if selecting a value in this group changes the price (e.g. Hair Length)">
+          <input type="checkbox" id="opt-group-price-flag-${d.id}" onchange="savePriceFlag(${d.id}, this.checked)" />
+          Affects Price
+        </label>
+        <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="renameOptionGroup(${d.id}, ${productId})">Rename</button>
+        <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deleteOptionGroup(${d.id}, ${productId})">Delete Group</button>
+      </div>
+    </div>
+    <div id="opt-values-${d.id}"></div>
+    <div class="add-value-row">
+      <input class="adm-input" placeholder="Value, e.g. Kinky Curly" id="new-value-label-${d.id}" />
+      <input class="adm-input delta-input" type="number" step="0.01" placeholder="price adj." id="new-value-delta-${d.id}" />
+      <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="addOptionValue(${d.id}, ${productId})">+ Add</button>
+    </div>`;
+  container.appendChild(div);
+
+  input.value = '';
+  document.getElementById('add-group-form-' + productId).classList.remove('open');
+  toast('Option group added');
+}
+
+async function renameOptionGroup(groupId, productId) {
+  const cur = document.getElementById('opt-group-name-' + groupId).textContent.trim();
+  const name = prompt('Rename option group:', cur);
+  if (!name || !name.trim() || name.trim() === cur) return;
+  const d = await admPost('/admin/api/shop/options/' + groupId + '/update/', { name: name.trim() });
+  if (!d.success) { toast(d.error || 'Error', true); return; }
+  document.getElementById('opt-group-name-' + groupId).textContent = name.trim();
+  const s = shopState.products[productId];
+  if (s) { const g = s.groups.find(g => g.id === groupId); if (g) g.name = name.trim(); }
+  regeneratePhotoSelects(productId);
+  toast('Renamed');
+}
+
+async function deleteOptionGroup(groupId, productId) {
+  if (!confirm('Delete this option group and all its values?')) return;
+  const d = await admPost('/admin/api/shop/options/' + groupId + '/delete/', {});
+  if (!d.success) { toast(d.error || 'Error', true); return; }
+  document.getElementById('opt-group-' + groupId)?.remove();
+  const s = shopState.products[productId];
+  if (s) s.groups = s.groups.filter(g => g.id !== groupId);
+  regeneratePhotoSelects(productId);
+  toast('Option group deleted');
+}
+
+// ── Option Values ─────────────────────────────────────────────
+async function addOptionValue(groupId, productId) {
+  const labelInput = document.getElementById('new-value-label-' + groupId);
+  const deltaInput = document.getElementById('new-value-delta-' + groupId);
+  const label = labelInput.value.trim();
+  if (!label) { toast('Value label is required.', true); return; }
+  const delta = parseFloat(deltaInput.value) || 0;
+  const d = await admPost('/admin/api/shop/options/' + groupId + '/values/add/', { label, price_delta: delta });
+  if (!d.success) { toast(d.error || 'Error', true); return; }
+
+  // Update registry
+  const s = shopState.products[productId];
+  if (s) { const g = s.groups.find(g => g.id === groupId); if (g) g.values.push({ id: d.id, label: d.label, price_delta: d.price_delta }); }
+
+  // Append value row to DOM
+  const valContainer = document.getElementById('opt-values-' + groupId);
+  const row = document.createElement('div');
+  row.className = 'opt-value-row'; row.id = 'opt-value-' + d.id;
+  row.innerHTML = `<span class="opt-value-label">${d.label}</span><input class="opt-value-price" type="number" step="0.01" placeholder="0.00" value="${delta.toFixed(2)}" title="Price added to base price when this is selected" onchange="saveValueDelta(${d.id}, this.value)" /><button class="opt-value-del" onclick="deleteOptionValue(${d.id}, ${groupId}, ${productId})">✕</button>`;
+  valContainer.appendChild(row);
+
+  labelInput.value = ''; deltaInput.value = '';
+  regeneratePhotoSelects(productId);
+  toast('Value added');
+}
+
+async function deleteOptionValue(valueId, groupId, productId) {
+  if (!confirm('Delete this option value?')) return;
+  const d = await admPost('/admin/api/shop/option-values/' + valueId + '/delete/', {});
+  if (!d.success) { toast(d.error || 'Error', true); return; }
+  document.getElementById('opt-value-' + valueId)?.remove();
+  const s = shopState.products[productId];
+  if (s) { const g = s.groups.find(g => g.id === groupId); if (g) g.values = g.values.filter(v => v.id !== valueId); }
+  regeneratePhotoSelects(productId);
+  toast('Value deleted');
+}
+
+// ── Photos ────────────────────────────────────────────────────
+async function addImage(productId) {
+  const fileInput = document.getElementById('new-photo-' + productId);
+  const file = fileInput.files[0];
+  if (!file) { toast('Choose a photo first.', true); return; }
+  const fd = new FormData();
+  fd.append('csrfmiddlewaretoken', getCsrf()); fd.append('image', file);
+  const r = await fetch('/admin/api/shop/products/' + productId + '/images/add/', { method: 'POST', body: fd });
+  const d = await r.json();
+  if (!d.success) { toast(d.error || 'Error', true); return; }
+
+  // Update registry
+  const s = shopState.products[productId];
+  if (s) s.photos.push({ id: d.id, url: d.url, option_value_id: null });
+
+  // Append photo card to grid
+  const grid = document.getElementById('photo-grid-' + productId);
+  const wrap = document.createElement('div');
+  wrap.className = 'photo-thumb-wrap'; wrap.id = 'photo-' + d.id;
+
+  let optOpts = '<option value="">Not linked</option>';
+  if (s) s.groups.forEach(function(g) { g.values.forEach(function(v) { optOpts += `<option value="${v.id}">${g.name}: ${v.label}</option>`; }); });
+
+  wrap.innerHTML = `<img src="${d.url}" alt="" /><div class="photo-thumb-meta"><select id="photo-select-${d.id}" onchange="updateImageOption(${d.id}, this.value, ${productId})">${optOpts}</select><button onclick="deleteImage(${d.id}, ${productId})">Delete</button></div>`;
+  grid.appendChild(wrap);
+  fileInput.value = '';
+  toast('Photo added');
+}
+
+async function updateImageOption(imageId, optionValueId, productId) {
+  const d = await admPost('/admin/api/shop/images/' + imageId + '/update/', { option_value_id: optionValueId || null });
+  if (d.success) {
+    toast('Photo link updated');
+    const s = shopState.products[productId];
+    if (s) { const p = s.photos.find(p => p.id === imageId); if (p) p.option_value_id = optionValueId ? parseInt(optionValueId) : null; }
+  } else toast(d.error || 'Error', true);
+}
+
+async function deleteImage(imageId, productId) {
+  if (!confirm('Delete this photo?')) return;
+  const d = await admPost('/admin/api/shop/images/' + imageId + '/delete/', {});
+  if (d.success) {
+    document.getElementById('photo-' + imageId)?.remove();
+    const s = shopState.products[productId];
+    if (s) s.photos = s.photos.filter(p => p.id !== imageId);
+    toast('Photo deleted');
+  } else toast(d.error || 'Error', true);
+}
+</script>
+{% endblock %}

@@ -1,12 +1,163 @@
 {% extends "base.html" %}
-{% block title %}Style Gallery | Good Hair Daye{% endblock %}
+{% block title %}Style Gallery | Good Hair Daye — Washington D.C. Hair Salon{% endblock %}
+{% block meta_description %}Browse the Good Hair Daye style gallery — silk presses, extensions, color, and more. See real client results from our Washington D.C. boutique salon and book the look you love.{% endblock %}
+{% block og_title %}Style Gallery | Good Hair Daye — Washington D.C.{% endblock %}
+{% block og_description %}Real client hair transformations — silk presses, extensions, color, and more from Good Hair Daye in Washington D.C.{% endblock %}
 
 {% block content %}
-<section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
-  <div class="container-site text-center">
-    <p class="text-label mb-4" style="color: var(--color-brown);">The Work</p>
-    <h1 class="text-heading-xl mb-4">Style Gallery</h1>
-    <p class="text-body max-w-md mx-auto">Gallery coming soon.</p>
+<section class="section-py" style="background: var(--color-cream);">
+  <div class="container-site">
+    <div class="text-center" style="margin-bottom: 3rem;">
+      <p class="text-label mb-3" style="color: var(--color-brown);">The Work</p>
+      <h1 class="text-heading-xl">Style Gallery</h1>
+    </div>
+
+    {% if photos %}
+    <div class="ghd-gallery">
+      {% for photo in photos %}
+      <div class="ghd-gallery-item">
+        <img src="{{ photo.image.url }}" alt="{{ photo.caption }}" loading="lazy" />
+        <div class="ghd-gallery-overlay">
+          {% if photo.caption %}
+          <p class="ghd-gallery-caption">{{ photo.caption }}</p>
+          {% endif %}
+          {% if photo.service %}
+          <button class="ghd-gallery-book-btn"
+                  onclick="event.stopPropagation(); Booking.open({{ photo.service.id }})">
+            Book This Style
+          </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center" style="padding: 4rem 1rem; color: var(--color-mid);">
+      <p class="text-body">Gallery coming soon.</p>
+    </div>
+    {% endif %}
   </div>
 </section>
+
+<style>
+  .ghd-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px;
+  }
+
+  .ghd-gallery-item {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--color-tan);
+  }
+
+  .ghd-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .ghd-gallery-item:hover img {
+    transform: scale(1.04);
+  }
+
+  .ghd-gallery-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(60, 35, 25, 0.62);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .ghd-gallery-item:hover .ghd-gallery-overlay {
+    opacity: 1;
+  }
+
+  .ghd-gallery-caption {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #fff;
+    text-align: center;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+  }
+
+  .ghd-gallery-book-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.75);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.5rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .ghd-gallery-book-btn:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: #fff;
+  }
+
+  @media (max-width: 600px) {
+    .ghd-gallery {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px;
+    }
+  }
+
+  /* Touch devices: disable hover, use .tapped class instead */
+  @media (hover: none) {
+    .ghd-gallery-item:hover .ghd-gallery-overlay { opacity: 0; }
+    .ghd-gallery-item:hover img { transform: none; }
+    .ghd-gallery-item.tapped .ghd-gallery-overlay { opacity: 1; }
+    .ghd-gallery-item.tapped img { transform: scale(1.04); }
+  }
+</style>
+
+<script>
+  if ('ontouchstart' in window) {
+    document.querySelectorAll('.ghd-gallery-item').forEach(function(item) {
+      item.addEventListener('touchend', function(e) {
+        // If the finger lifted on the book button, let it fire normally
+        if (e.target.closest('.ghd-gallery-book-btn')) return;
+
+        var alreadyOpen = item.classList.contains('tapped');
+
+        // Close all open items
+        document.querySelectorAll('.ghd-gallery-item.tapped').forEach(function(el) {
+          el.classList.remove('tapped');
+        });
+
+        if (!alreadyOpen) {
+          // First tap: show overlay, don't navigate/book
+          e.preventDefault();
+          item.classList.add('tapped');
+        }
+      });
+    });
+
+    // Tap outside any gallery item — close all
+    document.addEventListener('touchend', function(e) {
+      if (!e.target.closest('.ghd-gallery-item')) {
+        document.querySelectorAll('.ghd-gallery-item.tapped').forEach(function(el) {
+          el.classList.remove('tapped');
+        });
+      }
+    });
+  }
+</script>
 {% endblock %}

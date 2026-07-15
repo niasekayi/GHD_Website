@@ -1,0 +1,235 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Appointments — GHD Admin{% endblock %}
+{% block nav_appts %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .filter-tab {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--tan);
+    border-radius: 2rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--mid);
+    text-decoration: none;
+    transition: all 0.15s;
+    background: var(--white);
+  }
+  .filter-tab:hover { border-color: var(--brown); color: var(--dark); }
+  .filter-tab.active { background: var(--dark-brown); border-color: var(--dark-brown); color: #fff; }
+
+  .appt-card {
+    background: var(--white);
+    border: 1px solid var(--tan);
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .appt-card:hover { border-color: var(--brown); }
+
+  .appt-card-header {
+    display: grid;
+    grid-template-columns: 100px 1fr auto auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+  }
+
+  .appt-date-block {
+    text-align: center;
+    background: var(--beige);
+    border-radius: 4px;
+    padding: 0.5rem 0.25rem;
+  }
+  .appt-date-month { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brown); font-weight: 600; }
+  .appt-date-day { font-size: 1.5rem; font-weight: 300; color: var(--dark); line-height: 1.1; font-family: var(--font-serif); }
+  .appt-date-dow { font-size: 0.65rem; color: var(--mid); }
+
+  .appt-info-main { min-width: 0; }
+  .appt-client { font-weight: 500; font-size: 0.95rem; color: var(--dark); }
+  .appt-service { font-size: 0.8rem; color: var(--mid); margin-top: 0.1rem; }
+  .appt-time { font-size: 0.75rem; color: var(--brown); margin-top: 0.15rem; }
+
+  .appt-badges { display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-end; }
+  .appt-expand-btn { font-size: 0.75rem; color: var(--mid); padding: 0.25rem; transition: transform 0.2s; }
+  .appt-card.expanded .appt-expand-btn { transform: rotate(180deg); }
+
+  .appt-detail {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid var(--beige);
+  }
+  .appt-card.expanded .appt-detail { display: block; }
+
+  .appt-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+  }
+  .appt-detail-field label { font-size: 0.62rem; letter-spacing: 0.09em; text-transform: uppercase; color: var(--mid); display: block; margin-bottom: 0.2rem; }
+  .appt-detail-field span { font-size: 0.85rem; color: var(--dark); }
+
+  .appt-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem; }
+  .appt-status-select { padding: 0.35rem 0.6rem; border: 1px solid var(--tan); border-radius: 2px; font-size: 0.78rem; font-family: inherit; background: var(--white); color: var(--dark); outline: none; }
+  .appt-status-select:focus { border-color: var(--brown); }
+
+  .appt-notes-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--tan);
+    border-radius: 2px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+    color: var(--dark);
+    outline: none;
+    margin-top: 0.5rem;
+  }
+  .appt-notes-input:focus { border-color: var(--brown); }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--mid);
+    font-size: 0.85rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Appointments</h1>
+</div>
+
+<!-- Filter tabs -->
+<div class="filter-tabs">
+  <a href="/admin/appointments/" class="filter-tab {% if filter == 'upcoming' %}active{% endif %}">Upcoming</a>
+  <a href="/admin/appointments/?filter=today" class="filter-tab {% if filter == 'today' %}active{% endif %}">Today</a>
+  <a href="/admin/appointments/?filter=past" class="filter-tab {% if filter == 'past' %}active{% endif %}">Past</a>
+  <a href="/admin/appointments/?filter=all" class="filter-tab {% if filter == 'all' %}active{% endif %}">All</a>
+</div>
+
+{% if appointments %}
+{% for a in appointments %}
+<div class="appt-card" id="appt-{{ a.id }}">
+  <div class="appt-card-header" onclick="toggleAppt({{ a.id }})">
+
+    <div class="appt-date-block">
+      <div class="appt-date-month">{{ a.date|date:"M" }}</div>
+      <div class="appt-date-day">{{ a.date|date:"j" }}</div>
+      <div class="appt-date-dow">{{ a.date|date:"D" }}</div>
+    </div>
+
+    <div class="appt-info-main">
+      <div class="appt-client">{{ a.client_name }}</div>
+      <div class="appt-service">{% if a.service %}{{ a.service.name }}{% else %}Consultation{% endif %}</div>
+      <div class="appt-time">{{ a.start_time|time:"g:i A" }}</div>
+    </div>
+
+    <div class="appt-badges">
+      <span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span>
+      {% if a.payment_status != 'pending' %}
+      <span class="badge badge-{{ a.payment_status }}">{{ a.get_payment_status_display }}</span>
+      {% endif %}
+    </div>
+
+    <span class="appt-expand-btn">▼</span>
+  </div>
+
+  <div class="appt-detail" id="detail-{{ a.id }}">
+    <div class="appt-detail-grid">
+      <div class="appt-detail-field">
+        <label>Phone</label>
+        <span>{{ a.client_phone|default:"—" }}</span>
+      </div>
+      <div class="appt-detail-field">
+        <label>Email</label>
+        <span>{{ a.client_email|default:"—" }}</span>
+      </div>
+      <div class="appt-detail-field">
+        <label>Service</label>
+        <span>{% if a.service %}{{ a.service.name }}{% else %}Consultation{% endif %}</span>
+      </div>
+      <div class="appt-detail-field">
+        <label>Date &amp; Time</label>
+        <span>{{ a.date|date:"F j, Y" }} at {{ a.start_time|time:"g:i A" }}</span>
+      </div>
+      {% if a.paypal_order_id %}
+      <div class="appt-detail-field">
+        <label>PayPal Order</label>
+        <span style="font-size:0.72rem;word-break:break-all;">{{ a.paypal_order_id }}</span>
+      </div>
+      {% endif %}
+      {% if a.addons_display %}
+      <div class="appt-detail-field">
+        <label>Add-ons</label>
+        <span>{{ a.addons_display }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="appt-actions">
+      <label style="font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--mid);">Status</label>
+      <select class="appt-status-select" id="status-{{ a.id }}" onchange="saveAppt({{ a.id }})">
+        <option value="pending"   {% if a.status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="confirmed" {% if a.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+        <option value="cancelled" {% if a.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+
+      <textarea class="appt-notes-input" id="anote-{{ a.id }}"
+                placeholder="Notes…">{{ a.notes }}</textarea>
+
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveAppt({{ a.id }})">Save</button>
+      <span id="saved-{{ a.id }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;">Saved</span>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+<div class="empty-state">
+  No appointments found{% if filter == 'today' %} for today{% elif filter == 'upcoming' %} coming up{% endif %}.
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function toggleAppt(id) {
+    const card = document.getElementById('appt-' + id);
+    card.classList.toggle('expanded');
+  }
+
+  async function saveAppt(id) {
+    const status = document.getElementById('status-' + id).value;
+    const notes  = document.getElementById('anote-' + id).value;
+    const d = await admPost('/admin/api/appointments/' + id + '/update/', { status, notes });
+    if (d.success) {
+      const el = document.getElementById('saved-' + id);
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 1800);
+      // Update badge
+      const badge = document.querySelector('#appt-' + id + ' .badge');
+      if (badge) {
+        badge.className = 'badge badge-' + status;
+        badge.textContent = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+      }
+    } else {
+      toast('Error saving', true);
+    }
+  }
+</script>
+{% endblock %}

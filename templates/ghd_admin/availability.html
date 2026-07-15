@@ -1,0 +1,243 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Availability — GHD Admin{% endblock %}
+{% block nav_avail %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ── Calendar ── */
+  .av-cal-wrap { background: var(--white); border: 1px solid var(--tan); border-radius: 4px; overflow: hidden; margin-bottom: 2rem; }
+
+  .av-cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--tan);
+    background: var(--cream);
+  }
+  .av-cal-month { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400; color: var(--dark); }
+
+  .av-cal-dow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: var(--beige);
+    border-bottom: 1px solid var(--tan);
+  }
+  .av-cal-dow span {
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dark);
+  }
+
+  .av-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--tan);
+  }
+  .av-cell {
+    min-height: 64px;
+    background: var(--white);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px;
+    position: relative;
+  }
+  .av-cell-empty { background: var(--cream); }
+
+  .av-cell-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--dark);
+    transition: background 0.15s;
+  }
+
+  /* States */
+  .av-cell-available { cursor: pointer; }
+  .av-cell-available:hover { background: var(--beige); }
+  .av-cell-available .av-cell-num { background: #dcfce7; color: #166534; }
+
+  .av-cell-blocked { cursor: pointer; }
+  .av-cell-blocked:hover { background: #fff5f5; }
+  .av-cell-blocked .av-cell-num { background: #fee2e2; color: #991b1b; }
+
+  .av-cell-closed { background: var(--cream) !important; cursor: default; }
+  .av-cell-closed .av-cell-num { color: var(--tan); }
+
+  .av-cell-past { opacity: 0.4; cursor: default !important; }
+  .av-cell-today .av-cell-num { border: 2px solid var(--brown); }
+
+  .av-appt-dot {
+    font-size: 0.58rem;
+    color: var(--dark-brown);
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+  .av-cell-label {
+    font-size: 0.52rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .av-cell-available .av-cell-label { color: #166534; }
+  .av-cell-blocked .av-cell-label { color: #991b1b; }
+  .av-cell-closed .av-cell-label { color: var(--tan); }
+
+  /* Legend */
+  .av-legend { display: flex; gap: 1.5rem; padding: 0.875rem 1.5rem; border-top: 1px solid var(--tan); }
+  .av-leg-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.65rem; letter-spacing: 0.06em; color: var(--dark); }
+  .av-leg-dot { width: 12px; height: 12px; border-radius: 50%; }
+
+  /* ── Weekly hours ── */
+  .hours-grid {
+    display: grid;
+    grid-template-columns: 140px 120px 1fr 1fr auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--beige);
+  }
+  .hours-grid:last-child { border-bottom: none; }
+  .hours-day { font-weight: 500; font-size: 0.88rem; color: var(--dark); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Availability</h1>
+</div>
+
+<!-- Calendar -->
+<div class="av-cal-wrap">
+  <div class="av-cal-nav">
+    {% if can_go_prev %}
+    <a href="/admin/availability/?year={{ prev_year }}&month={{ prev_month }}" class="adm-btn adm-btn-outline adm-btn-sm">← Prev</a>
+    {% else %}
+    <span style="width:72px;"></span>
+    {% endif %}
+    <span class="av-cal-month">{{ month_name }}</span>
+    <a href="/admin/availability/?year={{ next_year }}&month={{ next_month }}" class="adm-btn adm-btn-outline adm-btn-sm">Next →</a>
+  </div>
+
+  <div class="av-cal-dow">
+    {% for name in day_names %}<span>{{ name }}</span>{% endfor %}
+  </div>
+
+  <div class="av-cal-grid" id="cal-grid">
+    {% for p in start_pad_range %}
+    <div class="av-cell av-cell-empty"></div>
+    {% endfor %}
+
+    {% for d in days %}
+    <div class="av-cell
+          {% if d.is_past %}av-cell-past{% elif d.is_blocked %}av-cell-blocked{% elif d.is_working %}av-cell-available{% else %}av-cell-closed{% endif %}
+          {% if d.is_today %}av-cell-today{% endif %}"
+         id="cell-{{ d.date|date:'Y-m-d' }}"
+         {% if not d.is_past %}onclick="toggleDay('{{ d.date|date:'Y-m-d' }}', this)"{% endif %}
+         title="{% if d.is_past %}Past{% elif d.is_blocked %}Blocked — click to unblock{% elif d.is_working %}Open — click to block{% else %}Closed (not a working day){% endif %}">
+      <div class="av-cell-num">{{ d.day }}</div>
+      {% if d.appt_count > 0 %}
+        <span class="av-appt-dot">{{ d.appt_count }} appt{% if d.appt_count != 1 %}s{% endif %}</span>
+      {% endif %}
+      {% if not d.is_past %}
+        {% if d.is_blocked %}<span class="av-cell-label">Blocked</span>
+        {% elif d.is_working %}<span class="av-cell-label">Open</span>
+        {% else %}<span class="av-cell-label">Closed</span>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="av-legend">
+    <div class="av-leg-item"><div class="av-leg-dot" style="background:#dcfce7;border:1px solid #86efac;"></div> Open (click to block)</div>
+    <div class="av-leg-item"><div class="av-leg-dot" style="background:#fee2e2;border:1px solid #fca5a5;"></div> Blocked (click to unblock)</div>
+    <div class="av-leg-item"><div class="av-leg-dot" style="background:var(--beige);border:1px solid var(--tan);"></div> Closed (not a working day)</div>
+    <div class="av-leg-item"><div class="av-leg-dot" style="background:var(--cream);"></div> Past</div>
+  </div>
+</div>
+
+<!-- Weekly hours -->
+<div class="adm-section-header">
+  <h2 style="font-size:0.9rem;font-weight:600;color:var(--dark);letter-spacing:0.04em;">Weekly Working Hours</h2>
+  <span style="font-size:0.75rem;color:var(--mid);">Changes save automatically</span>
+</div>
+
+<div class="adm-card">
+  {% for row in schedule_rows %}
+  <div class="hours-grid">
+    <div class="hours-day">{{ row.name }}</div>
+    <label class="adm-toggle">
+      <input type="checkbox" {% if row.is_active %}checked{% endif %}
+             onchange="saveHours({{ row.dow }})" id="hactive-{{ row.dow }}" />
+      <span class="adm-toggle-slider"></span>
+    </label>
+    <div>
+      <label class="adm-label" style="margin-bottom:0.2rem;">Opens</label>
+      <input class="adm-input" type="time" id="hstart-{{ row.dow }}"
+             value="{{ row.start }}" onchange="saveHours({{ row.dow }})" />
+    </div>
+    <div>
+      <label class="adm-label" style="margin-bottom:0.2rem;">Closes</label>
+      <input class="adm-input" type="time" id="hend-{{ row.dow }}"
+             value="{{ row.end }}" onchange="saveHours({{ row.dow }})" />
+    </div>
+    <span id="hsaved-{{ row.dow }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;">Saved</span>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  async function toggleDay(dateStr, cell) {
+    const d = await admPost('/admin/api/toggle-date/', { date: dateStr });
+    if (d.error) { toast(d.error, true); return; }
+
+    cell.classList.remove('av-cell-available', 'av-cell-blocked', 'av-cell-closed');
+    const lbl = cell.querySelector('.av-cell-label');
+
+    if (d.blocked) {
+      cell.classList.add('av-cell-blocked');
+      cell.title = 'Blocked — click to unblock';
+      if (lbl) lbl.textContent = 'Blocked';
+    } else {
+      // restore based on whether it's a working day — re-check via class names
+      const wasWorking = !cell.classList.contains('av-cell-closed');
+      cell.classList.add(wasWorking ? 'av-cell-available' : 'av-cell-closed');
+      cell.title = wasWorking ? 'Open — click to block' : 'Closed (not a working day)';
+      if (lbl) lbl.textContent = wasWorking ? 'Open' : 'Closed';
+    }
+    toast(d.blocked ? 'Day blocked' : 'Day unblocked');
+  }
+
+  async function saveHours(dow) {
+    const body = {
+      dow:        dow,
+      is_active:  document.getElementById('hactive-' + dow).checked,
+      start_time: document.getElementById('hstart-' + dow).value,
+      end_time:   document.getElementById('hend-' + dow).value,
+    };
+    const d = await admPost('/admin/api/update-schedule/', body);
+    if (d.success) {
+      const el = document.getElementById('hsaved-' + dow);
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 1800);
+    } else {
+      toast('Error saving hours', true);
+    }
+  }
+</script>
+{% endblock %}

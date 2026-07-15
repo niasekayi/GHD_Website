@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.core.mail import send_mail
-from ..data import BRANDS, REVIEWS
+from ..data import BRANDS
+from ..models import Review
 from .forms import CommunityForm
 
 
@@ -18,8 +20,8 @@ def home(request):
                 send_mail(
                     subject=f'New Community Sign-Up: {first} {last}',
                     message=f'Name: {first} {last}\nEmail: {email}',
-                    from_email='noreply@goodhairdaye.com',
-                    recipient_list=['info@goodhairdaye.com'],
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.SALON_EMAIL],
                     fail_silently=True,
                 )
             except Exception:
@@ -27,9 +29,10 @@ def home(request):
             form = CommunityForm()
             success = True
 
+    reviews = Review.objects.filter(is_active=True)[:3]
     return render(request, 'pages/home/home.html', {
         'brands': BRANDS,
-        'reviews': REVIEWS,
+        'reviews': reviews,
         'form': form,
         'success': success,
     })

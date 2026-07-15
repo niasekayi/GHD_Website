@@ -1,11 +1,109 @@
 {% extends "base.html" %}
 {% block title %}Privacy Policy | Good Hair Daye{% endblock %}
+{% block meta_description %}Privacy Policy for Good Hair Daye — learn how we collect, use, and protect your personal information.{% endblock %}
 
 {% block content %}
 <section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
   <div class="container-site max-w-2xl">
-    <h1 class="text-heading-xl mb-8">Privacy Policy</h1>
-    <p class="text-body">Privacy policy content coming soon.</p>
+
+    <h1 class="text-heading-xl mb-3">Privacy Policy</h1>
+    <p class="text-body mb-10" style="color: var(--color-mid); font-size: 0.82rem; letter-spacing: 0.04em;">Last updated: June 2025</p>
+
+    <p class="text-body mb-10">
+      Good Hair Daye ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains
+      how we collect, use, and safeguard your personal information when you visit our website, book an appointment,
+      or purchase products. By using our services, you agree to the practices described in this policy.
+    </p>
+
+    <!-- ── Section 1 ── -->
+    <div class="mb-10">
+      <h2 class="mb-5" style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 500; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.6rem;">
+        Information We Collect
+      </h2>
+      <p class="text-body mb-5">
+        We collect information that you provide directly, as well as certain technical information gathered
+        automatically when you use our website.
+      </p>
+
+      <div class="mb-5">
+        <p class="text-body mb-2" style="font-weight: 500; color: var(--color-dark);">Contact &amp; Identity Details</p>
+        <p class="text-body">
+          Name, email address, phone number, and mailing address provided when booking an appointment,
+          making a purchase, or signing up for our community newsletter.
+        </p>
+      </div>
+
+      <div class="mb-5">
+        <p class="text-body mb-2" style="font-weight: 500; color: var(--color-dark);">Appointment &amp; Service Details</p>
+        <p class="text-body">
+          Services booked, stylist preference, appointment dates and times, and any notes you provide
+          relevant to your requested service.
+        </p>
+      </div>
+
+      <div class="mb-5">
+        <p class="text-body mb-2" style="font-weight: 500; color: var(--color-dark);">Communications</p>
+        <p class="text-body">
+          Inquiries, customer feedback, and your communication preferences — including opt-ins for
+          email and SMS marketing.
+        </p>
+      </div>
+
+      <div class="mb-5">
+        <p class="text-body mb-2" style="font-weight: 500; color: var(--color-dark);">Payment Information</p>
+        <p class="text-body">
+          Payments are processed securely through our third-party payment providers. We do <strong>not</strong>
+          store full credit or debit card numbers, CVV codes, or bank account information on our systems.
+        </p>
+      </div>
+
+      <div class="mb-5">
+        <p class="text-body mb-2" style="font-weight: 500; color: var(--color-dark);">Technical Information</p>
+        <p class="text-body">
+          IP address, browser and device type, pages visited, cookies, and similar technologies used
+          for website functionality, analytics, and performance.
+        </p>
+      </div>
+
+      <div class="mb-5">
+        <p class="text-body mb-2" style="font-weight: 500; color: var(--color-dark);">Optional Sensitive Information</p>
+        <p class="text-body">
+          You may voluntarily share details such as allergies or other relevant health information to
+          help us personalize your service experience. Please only share information you are comfortable
+          providing — this information is used solely to deliver safe and tailored services.
+        </p>
+      </div>
+    </div>
+
+    <!-- ── Section 2 ── -->
+    <div class="mb-10">
+      <h2 class="mb-5" style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 500; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.6rem;">
+        How We Use Your Information
+      </h2>
+      <p class="text-body mb-5">
+        We use the information we collect for the following purposes:
+      </p>
+      <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for item in policy_items %}
+        <li style="display: flex; gap: 0.75rem; align-items: flex-start;">
+          <span style="color: var(--color-brown); font-size: 0.75rem; margin-top: 0.35rem; flex-shrink: 0;">&#9670;</span>
+          <span class="text-body">{{ item }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- ── Contact ── -->
+    <div class="mb-4">
+      <h2 class="mb-4" style="font-family: var(--font-serif); font-size: 1.35rem; font-weight: 500; color: var(--color-dark); border-bottom: 1px solid var(--color-tan); padding-bottom: 0.6rem;">
+        Contact Us
+      </h2>
+      <p class="text-body">
+        If you have any questions about this Privacy Policy or how we handle your information, please
+        contact us at <a href="mailto:Goodhair.daye@yahoo.com" style="color: var(--color-brown); text-decoration: underline;">Goodhair.daye@yahoo.com</a>.
+      </p>
+    </div>
+
   </div>
 </section>
 {% endblock %}

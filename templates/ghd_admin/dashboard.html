@@ -1,0 +1,112 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Dashboard — GHD Admin{% endblock %}
+{% block nav_dash %}active{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Good morning{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}</h1>
+  <span style="font-size:0.8rem;color:var(--mid);">{{ today|date:"l, F j, Y" }}</span>
+</div>
+
+<!-- Stats -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:1rem;" class="adm-stat-grid">
+  {% for label, val, url in stats %}
+  <a href="{{ url }}" style="text-decoration:none;">
+    <div class="adm-card" style="text-align:center;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--brown)'" onmouseout="this.style.borderColor='var(--tan)'">
+      <div style="font-size:2.5rem;font-weight:300;color:var(--dark-brown);line-height:1;">{{ val }}</div>
+      <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--mid);margin-top:0.4rem;">{{ label }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Navigate to sections -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:2rem;" class="adm-nav-grid">
+
+  <a href="/admin/services/" style="text-decoration:none;">
+    <div class="adm-card" style="cursor:pointer;height:120px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;transition:border-color 0.15s,box-shadow 0.15s;" onmouseover="this.style.borderColor='var(--dark-brown)';this.style.boxShadow='0 2px 12px rgba(90,60,40,0.08)'" onmouseout="this.style.borderColor='var(--tan)';this.style.boxShadow='none'">
+      <div style="font-weight:600;color:var(--dark);margin-bottom:0.25rem;">Services &amp; Pricing</div>
+      <div style="font-size:0.78rem;color:var(--mid);">Add, edit, or remove services. Change prices, descriptions, and durations.</div>
+    </div>
+  </a>
+
+  <a href="/admin/availability/" style="text-decoration:none;">
+    <div class="adm-card" style="cursor:pointer;height:120px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;transition:border-color 0.15s,box-shadow 0.15s;" onmouseover="this.style.borderColor='var(--dark-brown)';this.style.boxShadow='0 2px 12px rgba(90,60,40,0.08)'" onmouseout="this.style.borderColor='var(--tan)';this.style.boxShadow='none'">
+      <div style="font-weight:600;color:var(--dark);margin-bottom:0.25rem;">Availability Calendar</div>
+      <div style="font-size:0.78rem;color:var(--mid);">Block or open days. Set weekly working hours.</div>
+    </div>
+  </a>
+
+  <a href="/admin/appointments/" style="text-decoration:none;">
+    <div class="adm-card" style="cursor:pointer;height:120px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;transition:border-color 0.15s,box-shadow 0.15s;" onmouseover="this.style.borderColor='var(--dark-brown)';this.style.boxShadow='0 2px 12px rgba(90,60,40,0.08)'" onmouseout="this.style.borderColor='var(--tan)';this.style.boxShadow='none'">
+      <div style="font-weight:600;color:var(--dark);margin-bottom:0.25rem;">Appointments</div>
+      <div style="font-size:0.78rem;color:var(--mid);">View upcoming and past bookings. Confirm or cancel appointments.</div>
+    </div>
+  </a>
+
+</div>
+
+<!-- Today -->
+<div class="adm-section-header" style="margin-bottom:1rem;">
+  <h2 style="font-size:0.9rem;font-weight:600;color:var(--dark);letter-spacing:0.04em;">Today's Appointments</h2>
+  <a href="/admin/appointments/?filter=today" class="adm-btn adm-btn-ghost adm-btn-sm">View all →</a>
+</div>
+
+{% if today_appts %}
+<div class="adm-card" style="padding:0;overflow:hidden;">
+  <div style="overflow-x:auto;">
+  <table class="adm-table">
+    <thead><tr><th>Time</th><th>Client</th><th>Service</th><th>Status</th><th>Payment</th><th></th></tr></thead>
+    <tbody>
+      {% for a in today_appts %}
+      <tr>
+        <td style="font-weight:500;">{{ a.start_time|time:"g:i A" }}</td>
+        <td>{{ a.client_name }}</td>
+        <td>{% if a.service %}{{ a.service.name }}{% else %}Consultation{% endif %}</td>
+        <td><span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+        <td><span class="badge badge-{{ a.payment_status }}">{{ a.get_payment_status_display }}</span></td>
+        <td><a href="/admin/appointments/?filter=today" class="adm-btn adm-btn-ghost adm-btn-sm">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% else %}
+<div class="adm-card adm-empty">No appointments today.</div>
+{% endif %}
+
+<!-- Upcoming -->
+{% if upcoming %}
+<div class="adm-section-header" style="margin-top:2rem;margin-bottom:1rem;">
+  <h2 style="font-size:0.9rem;font-weight:600;color:var(--dark);letter-spacing:0.04em;">Coming Up This Week</h2>
+  <a href="/admin/appointments/" class="adm-btn adm-btn-ghost adm-btn-sm">View all →</a>
+</div>
+<div class="adm-card" style="padding:0;overflow:hidden;">
+  <div style="overflow-x:auto;">
+  <table class="adm-table">
+    <thead><tr><th>Date</th><th>Time</th><th>Client</th><th>Service</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for a in upcoming %}
+      <tr>
+        <td>{{ a.date|date:"D, M j" }}</td>
+        <td>{{ a.start_time|time:"g:i A" }}</td>
+        <td>{{ a.client_name }}</td>
+        <td>{% if a.service %}{{ a.service.name }}{% else %}Consultation{% endif %}</td>
+        <td><span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Build stats passed from view
+  const today = {{ today_appts|length }};
+</script>
+{% endblock %}

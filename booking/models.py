@@ -87,6 +87,14 @@ class Appointment(models.Model):
     addons_display = models.TextField(blank=True, default='', help_text='Selected add-on service names, comma-separated')
     reminder_sent = models.BooleanField(default=False)
 
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('refunded', 'Refunded'),
+    ]
+    paypal_order_id = models.CharField(max_length=100, blank=True, default='')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

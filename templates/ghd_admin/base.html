@@ -1,0 +1,386 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Good Hair Daye Admin{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { max-width: 100%; overflow-x: hidden; }
+
+    :root {
+      --cream:      #FAF8F5;
+      --beige:      #F4EDE7;
+      --tan:        #DDD0C8;
+      --brown:      #A8897A;
+      --dark-brown: #7A5A4C;
+      --dark:       #5C4840;
+      --mid:        #A09088;
+      --white:      #FFFFFF;
+      --green:      #2e7d32;
+      --amber:      #b45309;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-sans:  'Jost', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--cream);
+      color: #2a2020;
+      min-height: 100vh;
+    }
+
+    /* ── Top bar ── */
+    .adm-topbar {
+      background: var(--dark);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .adm-logo {
+      font-family: var(--font-serif);
+      font-size: 1.1rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: #fff;
+      text-decoration: none;
+    }
+    .adm-logo span {
+      font-size: 0.6rem;
+      font-family: var(--font-sans);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-left: 0.6rem;
+    }
+    .adm-topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+    }
+    .adm-topbar-right a {
+      color: var(--tan);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .adm-topbar-right a:hover { color: #fff; }
+
+    /* ── Nav tabs ── */
+    .adm-nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--tan);
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+    }
+    .adm-nav a {
+      display: inline-block;
+      padding: 0.85rem 1.25rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--mid);
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .adm-nav a:hover { color: var(--dark); }
+    .adm-nav a.active { color: var(--dark); border-bottom-color: var(--dark-brown); }
+
+    /* ── Page wrapper ── */
+    .adm-page { max-width: 1100px; margin: 0 auto; padding: 2rem 2rem 4rem; }
+
+    /* ── Section header ── */
+    .adm-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .adm-section-title {
+      font-family: var(--font-serif);
+      font-size: 1.6rem;
+      font-weight: 400;
+      color: var(--dark);
+    }
+
+    /* ── Cards ── */
+    .adm-card {
+      background: var(--white);
+      border: 1px solid var(--tan);
+      border-radius: 4px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .adm-card-title {
+      font-family: var(--font-sans);
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--brown);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Buttons ── */
+    .adm-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.25rem;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .adm-btn-primary { background: var(--dark-brown); color: #fff; }
+    .adm-btn-primary:hover { background: var(--dark); }
+    .adm-btn-outline { background: transparent; color: var(--dark-brown); border: 1px solid var(--tan); }
+    .adm-btn-outline:hover { background: var(--beige); }
+    .adm-btn-ghost  { background: transparent; color: var(--mid); border: none; }
+    .adm-btn-ghost:hover { color: var(--dark); }
+    .adm-btn-danger { background: #b45309; color: #fff; }
+    .adm-btn-danger:hover { background: #92400e; }
+    .adm-btn-sm { padding: 0.35rem 0.75rem; font-size: 0.65rem; }
+
+    /* ── Form inputs ── */
+    .adm-input, .adm-textarea, .adm-select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      border: 1px solid var(--tan);
+      border-radius: 2px;
+      background: var(--white);
+      color: #2a2020;
+      outline: none;
+    }
+    .adm-input:focus, .adm-textarea:focus, .adm-select:focus {
+      border-color: var(--dark-brown);
+    }
+    .adm-textarea { resize: vertical; min-height: 72px; }
+    .adm-label {
+      display: block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mid);
+      margin-bottom: 0.3rem;
+    }
+    .adm-field { margin-bottom: 0.75rem; }
+    .adm-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    /* ── Table ── */
+    .adm-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .adm-table th {
+      text-align: left;
+      padding: 0.6rem 1rem;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--mid);
+      border-bottom: 2px solid var(--tan);
+      background: var(--cream);
+    }
+    .adm-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--beige); vertical-align: middle; }
+    .adm-table tr:last-child td { border-bottom: none; }
+    .adm-table tbody tr:hover td { background: var(--cream); }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 2px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .badge-confirmed { background: #dcfce7; color: #166534; }
+    .badge-pending   { background: #fef3c7; color: #92400e; }
+    .badge-cancelled { background: #f3f4f6; color: #6b7280; }
+    .badge-paid      { background: #dcfce7; color: #166534; }
+    .badge-active    { background: #F4EDE7; color: var(--dark-brown); }
+    .badge-inactive  { background: #f3f4f6; color: #9ca3af; }
+
+    /* ── Toggle switch ── */
+    .adm-toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .adm-toggle input { opacity: 0; width: 0; height: 0; }
+    .adm-toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--tan);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .adm-toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 14px; height: 14px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .adm-toggle input:checked + .adm-toggle-slider { background: var(--dark-brown); }
+    .adm-toggle input:checked + .adm-toggle-slider::before { transform: translateX(16px); }
+
+    /* ── Empty state ── */
+    .adm-empty { text-align: center; padding: 3rem 1rem; color: var(--mid); font-size: 0.9rem; }
+
+    /* ── Mobile responsive ── */
+    @media (max-width: 700px) {
+      /* Topbar: shrink text, stack if needed */
+      .adm-topbar { padding: 0 1rem; height: 50px; }
+      .adm-logo { font-size: 0.95rem; }
+      .adm-logo span { display: none; }
+      .adm-topbar-right { gap: 0.875rem; font-size: 0.68rem; }
+      .adm-topbar-right span { display: none; } /* hide username, keep links */
+
+      /* Nav: scroll horizontally instead of wrapping */
+      .adm-nav {
+        padding: 0 0.75rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        white-space: nowrap;
+        display: flex;
+        flex-wrap: nowrap;
+      }
+      .adm-nav::-webkit-scrollbar { display: none; }
+      .adm-nav a { padding: 0.75rem 0.875rem; font-size: 0.65rem; flex-shrink: 0; }
+
+      /* Page padding */
+      .adm-page { padding: 1.25rem 1rem 3rem; }
+
+      /* Cards: full width, tighter padding */
+      .adm-card { padding: 1rem; }
+
+      /* Field rows: stack on mobile */
+      .adm-field-row { grid-template-columns: 1fr; }
+
+      /* Tables: horizontal scroll */
+      .adm-table-wrap, .adm-card table { overflow-x: auto; display: block; }
+      .adm-table td, .adm-table th { padding: 0.5rem 0.75rem; font-size: 0.78rem; }
+
+      /* Dashboard stat/nav grids: smaller fixed height, smaller font */
+      .adm-card[style*="height:120px"] { height: auto !important; min-height: 80px; padding: 0.875rem; }
+
+      /* Hours grid: stack on mobile */
+      .hours-grid { grid-template-columns: 1fr 1fr !important; }
+      .hours-grid .hours-day { grid-column: 1 / -1; }
+
+      /* Gallery grid: 2 columns */
+      .gal-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+      /* Appointments card header: simpler layout */
+      .appt-card-header { grid-template-columns: 60px 1fr auto !important; }
+      .appt-date-block { padding: 0.3rem 0.15rem; }
+      .appt-date-day { font-size: 1.1rem; }
+
+      /* Edit drawer on gallery: full width */
+      .gal-edit-drawer { width: 100% !important; top: 50px; }
+
+      /* Dashboard grids: 1 column on small mobile */
+      .adm-stat-grid { grid-template-columns: repeat(3,1fr) !important; }
+      .adm-nav-grid  { grid-template-columns: 1fr !important; }
+      .adm-nav-grid .adm-card { height: auto !important; min-height: 60px; padding: 1rem; }
+
+      /* Section header: stack */
+      .adm-section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .adm-section-title { font-size: 1.3rem; }
+    }
+
+    /* ── Toast notification ── */
+    #adm-toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--dark);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #adm-toast.show { opacity: 1; transform: translateY(0); }
+    #adm-toast.error { background: #b45309; }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <div class="adm-topbar">
+    <a href="/admin/" class="adm-logo">Good Hair Daye <span>Admin</span></a>
+    <div class="adm-topbar-right">
+      <span>{{ request.user.username }}</span>
+      <a href="/" target="_blank" rel="noopener">View Site</a>
+      <a href="/admin/logout/">Sign Out</a>
+    </div>
+  </div>
+
+  <nav class="adm-nav">
+    <a href="/admin/"              class="{% block nav_dash %}{% endblock %}">Dashboard</a>
+    <a href="/admin/services/"     class="{% block nav_services %}{% endblock %}">Services</a>
+    <a href="/admin/availability/" class="{% block nav_avail %}{% endblock %}">Availability</a>
+    <a href="/admin/appointments/" class="{% block nav_appts %}{% endblock %}">Appointments</a>
+    <a href="/admin/gallery/"      class="{% block nav_gallery %}{% endblock %}">Gallery</a>
+    <a href="/admin/reviews/"      class="{% block nav_reviews %}{% endblock %}">Reviews</a>
+    <a href="/admin/shop/products/" class="{% block nav_shop_products %}{% endblock %}">Shop Products</a>
+    <a href="/admin/shop/orders/"  class="{% block nav_shop_orders %}{% endblock %}">Shop Orders</a>
+    <a href="/admin/users/"        class="{% block nav_users %}{% endblock %}">Users</a>
+  </nav>
+
+  <div class="adm-page">
+    {% block content %}{% endblock %}
+  </div>
+
+  <div id="adm-toast"></div>
+
+  <script>
+    function getCsrf() {
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+    function toast(msg, isError) {
+      const el = document.getElementById('adm-toast');
+      el.textContent = msg;
+      el.className = 'show' + (isError ? ' error' : '');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.className = '', 2800);
+    }
+    async function admPost(url, body) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify(body),
+      });
+      return res.json();
+    }
+  </script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

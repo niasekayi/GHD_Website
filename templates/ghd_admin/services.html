@@ -1,0 +1,390 @@
+{% extends "ghd_admin/base.html" %}
+{% block title %}Services — GHD Admin{% endblock %}
+{% block nav_services %}active{% endblock %}
+
+{% block extra_head %}
+<style>
+  .svc-cat { margin-bottom: 2rem; }
+  .svc-cat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--beige);
+    border: 1px solid var(--tan);
+    border-radius: 4px 4px 0 0;
+    border-bottom: none;
+  }
+  .svc-cat-name { font-weight: 600; font-size: 0.9rem; color: var(--dark); }
+
+  .svc-row {
+    background: var(--white);
+    border: 1px solid var(--tan);
+    border-top: none;
+    padding: 1rem 1.25rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: start;
+  }
+  .svc-row:last-child { border-radius: 0 0 4px 4px; }
+  .svc-row-info { flex: 1; }
+  .svc-name { font-weight: 500; font-size: 0.95rem; color: var(--dark); margin-bottom: 0.2rem; }
+  .svc-meta { display: flex; gap: 1rem; font-size: 0.75rem; color: var(--mid); flex-wrap: wrap; }
+  .svc-desc-preview { font-size: 0.75rem; color: var(--mid); margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 500px; }
+  .svc-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+  /* Edit drawer */
+  .svc-edit-drawer {
+    display: none;
+    border: 1px solid var(--tan);
+    border-top: none;
+    background: var(--cream);
+    padding: 1.25rem;
+  }
+  .svc-edit-drawer.open { display: block; }
+
+  .add-svc-form {
+    background: var(--cream);
+    border: 2px dashed var(--tan);
+    border-radius: 4px;
+    padding: 1.25rem;
+    margin-top: 0.5rem;
+    display: none;
+  }
+  .add-svc-form.open { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="adm-section-header">
+  <h1 class="adm-section-title">Services &amp; Pricing</h1>
+</div>
+
+{% for cat in categories %}
+<div class="svc-cat" id="cat-{{ cat.id }}">
+  <div class="svc-cat-header">
+    <span class="svc-cat-name">{{ cat.name }}</span>
+    <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="toggleAddForm({{ cat.id }})">+ Add Service</button>
+  </div>
+
+  {% for svc in cat.services.all %}
+  <div class="svc-row" id="svc-row-{{ svc.id }}">
+    <div class="svc-row-info">
+      <div class="svc-name">{{ svc.name }}
+        {% if not svc.is_active %}<span class="badge badge-inactive" style="margin-left:0.5rem;">Inactive</span>{% endif %}
+        {% if svc.is_addon %}<span class="badge badge-active" style="margin-left:0.4rem;">Add-on</span>{% endif %}
+      </div>
+      <div class="svc-meta">
+        <span>{{ svc.price_display }}</span>
+        <span>{{ svc.duration }}</span>
+        <span>Deposit: ${{ svc.deposit_amount }}</span>
+      </div>
+      {% if svc.description %}<div class="svc-desc-preview">{{ svc.description }}</div>{% endif %}
+    </div>
+    <div class="svc-actions">
+      <label class="adm-toggle" title="{{ svc.is_active|yesno:'Active,Inactive' }}">
+        <input type="checkbox" {% if svc.is_active %}checked{% endif %}
+               onchange="toggleActive({{ svc.id }}, this.checked)" />
+        <span class="adm-toggle-slider"></span>
+      </label>
+      <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="openEdit({{ svc.id }})">Edit</button>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="deleteSvc({{ svc.id }}, '{{ svc.name|escapejs }}')" style="color:#b45309;">Delete</button>
+    </div>
+  </div>
+  <!-- Edit drawer -->
+  <div class="svc-edit-drawer" id="edit-{{ svc.id }}">
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Service Name</label>
+        <input class="adm-input" id="name-{{ svc.id }}" value="{{ svc.name }}" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Price Display</label>
+        <input class="adm-input" id="price-{{ svc.id }}" value="{{ svc.price_display }}" placeholder='e.g. "$120" or "From $300"' />
+      </div>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Duration</label>
+        <input class="adm-input" id="dur-{{ svc.id }}" value="{{ svc.duration }}" placeholder='e.g. "2 hrs"' />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Deposit Amount ($)</label>
+        <input class="adm-input" type="number" step="0.01" id="dep-{{ svc.id }}" value="{{ svc.deposit_amount }}" />
+      </div>
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Description</label>
+      <textarea class="adm-textarea" id="desc-{{ svc.id }}">{{ svc.description }}</textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="closeEdit({{ svc.id }})">Cancel</button>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveService({{ svc.id }})">Save Changes</button>
+    </div>
+  </div>
+  {% empty %}
+  <div class="svc-row" style="color:var(--mid);font-style:italic;font-size:0.85rem;">No services yet.</div>
+  {% endfor %}
+
+  <!-- Add service form -->
+  <div class="add-svc-form" id="add-form-{{ cat.id }}">
+    <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1rem;">New Service in {{ cat.name }}</div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Service Name *</label>
+        <input class="adm-input" id="new-name-{{ cat.id }}" placeholder="e.g. Box Braids" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Price Display *</label>
+        <input class="adm-input" id="new-price-{{ cat.id }}" placeholder='e.g. "$200+" or "From $150"' />
+      </div>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Duration *</label>
+        <input class="adm-input" id="new-dur-{{ cat.id }}" placeholder='e.g. "3 hrs"' />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Deposit ($)</label>
+        <input class="adm-input" type="number" step="0.01" id="new-dep-{{ cat.id }}" value="50" />
+      </div>
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Description</label>
+      <textarea class="adm-textarea" id="new-desc-{{ cat.id }}" placeholder="Brief description shown to clients..."></textarea>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;margin-top:0.5rem;">
+      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.78rem;cursor:pointer;">
+        <input type="checkbox" id="new-addon-{{ cat.id }}" />
+        This is an add-on service
+      </label>
+      <div style="margin-left:auto;display:flex;gap:0.5rem;">
+        <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleAddForm({{ cat.id }})">Cancel</button>
+        <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addService({{ cat.id }})">Add Service</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- Add-ons section -->
+<div style="margin-top:2.5rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1.25rem;background:var(--beige);border:1px solid var(--tan);border-radius:4px 4px 0 0;border-bottom:none;">
+    <span class="svc-cat-name">Add-ons</span>
+    <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="toggleAddAddonForm()">+ Add Add-on</button>
+  </div>
+
+  {% for svc in addons %}
+  <div class="svc-row{% if forloop.last and not addons %} last{% endif %}" id="svc-row-{{ svc.id }}"
+       style="{% if forloop.last %}border-radius:0 0 4px 4px;{% endif %}">
+    <div class="svc-row-info">
+      <div class="svc-name">{{ svc.name }}
+        {% if not svc.is_active %}<span class="badge badge-inactive" style="margin-left:0.5rem;">Inactive</span>{% endif %}
+      </div>
+      <div class="svc-meta">
+        <span>{{ svc.price_display }}</span>
+        <span>{{ svc.duration }}</span>
+        <span>Deposit: ${{ svc.deposit_amount }}</span>
+        <span style="color:var(--brown);">{{ svc.category.name }}</span>
+      </div>
+      {% if svc.description %}<div class="svc-desc-preview">{{ svc.description }}</div>{% endif %}
+    </div>
+    <div class="svc-actions">
+      <label class="adm-toggle" title="{{ svc.is_active|yesno:'Active,Inactive' }}">
+        <input type="checkbox" {% if svc.is_active %}checked{% endif %}
+               onchange="toggleActive({{ svc.id }}, this.checked)" />
+        <span class="adm-toggle-slider"></span>
+      </label>
+      <button class="adm-btn adm-btn-outline adm-btn-sm" onclick="openEdit({{ svc.id }})">Edit</button>
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="deleteSvc({{ svc.id }}, '{{ svc.name|escapejs }}')" style="color:#b45309;">Delete</button>
+    </div>
+  </div>
+  <div class="svc-edit-drawer" id="edit-{{ svc.id }}">
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Add-on Name</label>
+        <input class="adm-input" id="name-{{ svc.id }}" value="{{ svc.name }}" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Price Display</label>
+        <input class="adm-input" id="price-{{ svc.id }}" value="{{ svc.price_display }}" placeholder='e.g. "+$30"' />
+      </div>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Duration</label>
+        <input class="adm-input" id="dur-{{ svc.id }}" value="{{ svc.duration }}" placeholder='e.g. "+30 min"' />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Deposit Amount ($)</label>
+        <input class="adm-input" type="number" step="0.01" id="dep-{{ svc.id }}" value="{{ svc.deposit_amount }}" />
+      </div>
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Description</label>
+      <textarea class="adm-textarea" id="desc-{{ svc.id }}">{{ svc.description }}</textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="closeEdit({{ svc.id }})">Cancel</button>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveService({{ svc.id }})">Save Changes</button>
+    </div>
+  </div>
+  {% empty %}
+  <div class="svc-row" style="border-radius:0 0 4px 4px;color:var(--mid);font-style:italic;font-size:0.85rem;">No add-ons yet.</div>
+  {% endfor %}
+
+  <!-- Add add-on form -->
+  <div class="add-svc-form" id="add-form-addon">
+    <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1rem;">New Add-on</div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Add-on Name *</label>
+        <input class="adm-input" id="new-name-addon" placeholder="e.g. Deep Conditioning" />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Price Display *</label>
+        <input class="adm-input" id="new-price-addon" placeholder='e.g. "+$25"' />
+      </div>
+    </div>
+    <div class="adm-field-row">
+      <div class="adm-field">
+        <label class="adm-label">Duration</label>
+        <input class="adm-input" id="new-dur-addon" placeholder='e.g. "+20 min"' />
+      </div>
+      <div class="adm-field">
+        <label class="adm-label">Category</label>
+        <select class="adm-input" id="new-cat-addon">
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Description</label>
+      <textarea class="adm-textarea" id="new-desc-addon" placeholder="Brief description..."></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.5rem;">
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleAddAddonForm()">Cancel</button>
+      <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addAddon()">Add Add-on</button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function openEdit(id) {
+    document.querySelectorAll('.svc-edit-drawer.open').forEach(el => el.classList.remove('open'));
+    document.getElementById('edit-' + id).classList.add('open');
+  }
+  function closeEdit(id) {
+    document.getElementById('edit-' + id).classList.remove('open');
+  }
+  function toggleAddForm(catId) {
+    const f = document.getElementById('add-form-' + catId);
+    f.classList.toggle('open');
+    if (f.classList.contains('open')) {
+      setTimeout(() => f.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    }
+  }
+
+  async function toggleActive(id, active) {
+    const d = await admPost('/admin/api/services/' + id + '/update/', { is_active: active });
+    if (d.success) toast(active ? 'Service activated' : 'Service deactivated');
+    else toast('Error saving', true);
+  }
+
+  async function saveService(id) {
+    const body = {
+      name:           document.getElementById('name-' + id).value,
+      price_display:  document.getElementById('price-' + id).value,
+      duration:       document.getElementById('dur-' + id).value,
+      deposit_amount: document.getElementById('dep-' + id).value,
+      description:    document.getElementById('desc-' + id).value,
+    };
+    const d = await admPost('/admin/api/services/' + id + '/update/', body);
+    if (d.success) {
+      toast('Saved!');
+      closeEdit(id);
+      // Update the displayed name/price/duration
+      const row = document.getElementById('svc-row-' + id);
+      row.querySelector('.svc-name').childNodes[0].textContent = body.name;
+      row.querySelector('.svc-meta span:nth-child(1)').textContent = body.price_display;
+      row.querySelector('.svc-meta span:nth-child(2)').textContent = body.duration;
+    } else {
+      toast('Error saving', true);
+    }
+  }
+
+  async function addService(catId) {
+    const name = document.getElementById('new-name-' + catId).value.trim();
+    const price = document.getElementById('new-price-' + catId).value.trim();
+    const dur   = document.getElementById('new-dur-' + catId).value.trim();
+    if (!name || !price || !dur) { toast('Name, price, and duration are required.', true); return; }
+
+    const body = {
+      category_id:    catId,
+      name:           name,
+      price_display:  price,
+      duration:       dur,
+      deposit_amount: document.getElementById('new-dep-' + catId).value,
+      description:    document.getElementById('new-desc-' + catId).value,
+      is_addon:       document.getElementById('new-addon-' + catId).checked,
+    };
+    try {
+      const d = await admPost('/admin/api/services/add/', body);
+      if (d.success) {
+        toast('Service added!');
+        location.reload();
+      } else {
+        toast(d.error || 'Error adding service', true);
+      }
+    } catch (e) {
+      toast('Request failed — check server logs', true);
+    }
+  }
+
+  async function deleteSvc(id, name) {
+    if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+    const d = await admPost('/admin/api/services/' + id + '/delete/', {});
+    if (d.success) {
+      toast('Service deleted');
+      document.getElementById('svc-row-' + id)?.remove();
+      document.getElementById('edit-' + id)?.remove();
+    } else {
+      toast('Error deleting', true);
+    }
+  }
+
+  function toggleAddAddonForm() {
+    document.getElementById('add-form-addon').classList.toggle('open');
+  }
+
+  async function addAddon() {
+    const name  = document.getElementById('new-name-addon').value.trim();
+    const price = document.getElementById('new-price-addon').value.trim();
+    const dur   = document.getElementById('new-dur-addon').value.trim();
+    const catId = document.getElementById('new-cat-addon').value;
+    if (!name || !price) { toast('Name and price are required.', true); return; }
+    const body = {
+      category_id:   catId,
+      name:          name,
+      price_display: price,
+      duration:      dur || '—',
+      description:   document.getElementById('new-desc-addon').value,
+      deposit_amount: 0,
+      is_addon:      true,
+    };
+    try {
+      const d = await admPost('/admin/api/services/add/', body);
+      if (d.success) { toast('Add-on added!'); location.reload(); }
+      else toast(d.error || 'Error adding add-on', true);
+    } catch (e) {
+      toast('Request failed — check server logs', true);
+    }
+  }
+</script>
+{% endblock %}

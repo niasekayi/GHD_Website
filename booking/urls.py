@@ -7,5 +7,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('api/services/', views.api_services, name='api_services'),
     path('api/availability/', views.api_availability, name='api_availability'),
+    path('api/create-paypal-order/', views.api_create_paypal_order, name='api_create_paypal_order'),
     path('api/book/', views.api_book, name='api_book'),
 ]
