@@ -6,6 +6,7 @@ from django.db import models
 class BookingSettings(models.Model):
     same_day_fee = models.DecimalField(max_digits=6, decimal_places=2, default=75.00)
     same_day_fee_enabled = models.BooleanField(default=True)
+    deposit_amount = models.DecimalField(max_digits=8, decimal_places=2, default=40.00)
 
     class Meta:
         verbose_name = 'Booking Settings'

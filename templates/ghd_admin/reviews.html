@@ -59,6 +59,12 @@
     transition: color 0.1s;
   }
   .star-picker span.on { color: #C8A870; }
+
+  @media (max-width: 700px) {
+    .rev-card-header { grid-template-columns: auto 1fr auto; }
+    .rev-card-header > div:nth-child(3) { display: none; } /* hide media badges on mobile */
+    .rev-body-preview { max-width: 100%; }
+  }
 </style>
 {% endblock %}
 

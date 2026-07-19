@@ -20,6 +20,9 @@ urlpatterns = [
     # AJAX APIs
     path('api/toggle-date/',                          admin_views.api_toggle_date,          name='ghd_api_toggle_date'),
     path('api/update-schedule/',                      admin_views.api_update_schedule,      name='ghd_api_update_schedule'),
+    path('api/booking-settings/update/',               admin_views.api_update_booking_settings, name='ghd_api_booking_settings'),
+    path('api/categories/add/',                        admin_views.api_add_category,            name='ghd_api_cat_add'),
+    path('api/categories/<int:cat_id>/delete/',        admin_views.api_delete_category,         name='ghd_api_cat_delete'),
     path('api/services/add/',                         admin_views.api_add_service,          name='ghd_api_add_service'),
     path('api/services/<int:service_id>/update/',     admin_views.api_update_service,       name='ghd_api_update_service'),
     path('api/services/<int:service_id>/delete/',     admin_views.api_delete_service,       name='ghd_api_delete_service'),

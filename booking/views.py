@@ -18,6 +18,7 @@ def index(request):
 
 @require_GET
 def api_services(request):
+    global_deposit = str(BookingSettings.get().deposit_amount)
     categories = ServiceCategory.objects.prefetch_related('services').order_by('order', 'name')
     data = []
     for cat in categories:
@@ -32,7 +33,7 @@ def api_services(request):
                         'price': s.price_display,
                         'duration': s.duration,
                         'description': s.description,
-                        'deposit': str(s.deposit_amount),
+                        'deposit': global_deposit,
                         'is_addon': s.is_addon,
                     }
                     for s in services
@@ -226,15 +227,15 @@ def api_book(request):
         except ValueError:
             return JsonResponse({'error': 'Invalid date or time.'}, status=400)
 
+        bk_settings = BookingSettings.get()
         service = None
         duration_minutes = 30
-        deposit_amount = 40
+        deposit_amount = bk_settings.deposit_amount
 
         if service_id:
             try:
                 service = Service.objects.get(pk=service_id, is_active=True)
                 duration_minutes = service.duration_minutes
-                deposit_amount = service.deposit_amount
             except Service.DoesNotExist:
                 return JsonResponse({'error': 'Invalid service.'}, status=400)
 
@@ -282,7 +283,6 @@ def api_book(request):
                 status=500,
             )
 
-        bk_settings = BookingSettings.get()
         same_day = (appt_date == date.today())
         same_day_fee_applied = same_day and bk_settings.same_day_fee_enabled
 

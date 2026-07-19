@@ -10,7 +10,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.http import require_POST
 
 from django.db import models
-from booking.models import WorkSchedule, BlockedDate, Appointment
+from booking.models import WorkSchedule, BlockedDate, Appointment, BookingSettings
 from services.models import ServiceCategory, Service
 from pages.models import GalleryPhoto, Review
 from goodhairdaye.admin_common import _staff, LOGIN_URL
@@ -49,7 +49,12 @@ def services_view(request):
         models.Prefetch('services', queryset=Service.objects.filter(is_addon=False))
     ).order_by('order', 'name')
     addons = Service.objects.filter(is_addon=True).select_related('category').order_by('category__order', 'name')
-    return render(request, 'ghd_admin/services.html', {'categories': categories, 'addons': addons})
+    booking_settings = BookingSettings.get()
+    return render(request, 'ghd_admin/services.html', {
+        'categories': categories,
+        'addons': addons,
+        'booking_settings': booking_settings,
+    })
 
 
 @_staff
@@ -209,13 +214,14 @@ def api_update_service(request, service_id):
 def api_add_service(request):
     data     = json.loads(request.body)
     category = get_object_or_404(ServiceCategory, pk=int(data['category_id']))
+    global_deposit = float(BookingSettings.get().deposit_amount)
     svc = Service.objects.create(
         category=category,
         name=data.get('name', '').strip(),
         price_display=data.get('price_display', '').strip(),
         duration=data.get('duration', '60 min').strip(),
         description=data.get('description', '').strip(),
-        deposit_amount=float(data.get('deposit_amount', 50)),
+        deposit_amount=float(data.get('deposit_amount', global_deposit)),
         is_active=True,
         is_addon=bool(data.get('is_addon', False)),
     )
@@ -227,6 +233,44 @@ def api_add_service(request):
 def api_delete_service(request, service_id):
     svc = get_object_or_404(Service, pk=service_id)
     svc.delete()
+    return JsonResponse({'success': True})
+
+
+@_staff
+@require_POST
+def api_update_booking_settings(request):
+    data = json.loads(request.body)
+    bk = BookingSettings.get()
+    if 'deposit_amount' in data:
+        bk.deposit_amount = float(data['deposit_amount'])
+    bk.save()
+    return JsonResponse({'success': True})
+
+
+@_staff
+@require_POST
+def api_add_category(request):
+    data = json.loads(request.body)
+    name = data.get('name', '').strip()
+    if not name:
+        return JsonResponse({'error': 'Category name is required.'}, status=400)
+    if ServiceCategory.objects.filter(name=name).exists():
+        return JsonResponse({'error': 'A category with this name already exists.'}, status=400)
+    cat = ServiceCategory.objects.create(name=name, order=ServiceCategory.objects.count())
+    return JsonResponse({'success': True, 'id': cat.id, 'name': cat.name})
+
+
+@_staff
+@require_POST
+def api_delete_category(request, cat_id):
+    cat = get_object_or_404(ServiceCategory, pk=cat_id)
+    service_count = cat.services.count()
+    if service_count > 0:
+        return JsonResponse(
+            {'error': f'"{cat.name}" still has {service_count} service(s). Move or delete them first.'},
+            status=400,
+        )
+    cat.delete()
     return JsonResponse({'success': True})
 
 

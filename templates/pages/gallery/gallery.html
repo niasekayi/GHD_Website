@@ -76,11 +76,13 @@
     gap: 0.75rem;
     padding: 1.25rem;
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.25s ease;
   }
 
   .ghd-gallery-item:hover .ghd-gallery-overlay {
     opacity: 1;
+    pointer-events: auto;
   }
 
   .ghd-gallery-caption {
@@ -121,9 +123,9 @@
 
   /* Touch devices: disable hover, use .tapped class instead */
   @media (hover: none) {
-    .ghd-gallery-item:hover .ghd-gallery-overlay { opacity: 0; }
+    .ghd-gallery-item:hover .ghd-gallery-overlay { opacity: 0; pointer-events: none; }
     .ghd-gallery-item:hover img { transform: none; }
-    .ghd-gallery-item.tapped .ghd-gallery-overlay { opacity: 1; }
+    .ghd-gallery-item.tapped .ghd-gallery-overlay { opacity: 1; pointer-events: auto; }
     .ghd-gallery-item.tapped img { transform: scale(1.04); }
   }
 </style>
@@ -132,10 +134,13 @@
   if ('ontouchstart' in window) {
     document.querySelectorAll('.ghd-gallery-item').forEach(function(item) {
       item.addEventListener('touchend', function(e) {
-        // If the finger lifted on the book button, let it fire normally
-        if (e.target.closest('.ghd-gallery-book-btn')) return;
-
         var alreadyOpen = item.classList.contains('tapped');
+
+        // Only let the book button fire if the overlay is already visible
+        if (e.target.closest('.ghd-gallery-book-btn')) {
+          if (alreadyOpen) return; // overlay visible — allow click
+          e.preventDefault();     // overlay hidden — block accidental click
+        }
 
         // Close all open items
         document.querySelectorAll('.ghd-gallery-item.tapped').forEach(function(el) {
@@ -143,7 +148,7 @@
         });
 
         if (!alreadyOpen) {
-          // First tap: show overlay, don't navigate/book
+          // First tap: show overlay
           e.preventDefault();
           item.classList.add('tapped');
         }
