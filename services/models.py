@@ -37,13 +37,12 @@ class Service(models.Model):
     def duration_minutes(self):
         import re
         s = self.duration.lower().strip()
-        m = re.match(r'(\d+\.?\d*)\+?\s*hr', s)
-        if m:
-            hrs = float(m.group(1))
-            if '+' in s:
-                hrs += 1.0
-            return int(hrs * 60)
-        m = re.match(r'(\d+)\s*min', s)
-        if m:
-            return int(m.group(1))
+        first_num = re.search(r'(\d+\.?\d*)', s)
+        if not first_num:
+            return 60
+        num = float(first_num.group(1))
+        if 'hr' in s or 'hour' in s:
+            return int(num * 60)
+        if 'min' in s:
+            return int(num)
         return 60
