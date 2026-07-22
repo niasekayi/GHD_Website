@@ -21,9 +21,9 @@
       Washington, D.C. Hair Salon & Extensions
     </p>
 
-    <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mt-2" style="width:100%;">
-      <a href="{% url 'booking:index' %}" class="btn btn-primary" style="min-width:200px;max-width:100%;" onclick="event.preventDefault(); Booking.open();">Book an Appointment</a>
-      <a href="{% url 'shop:index' %}"    class="btn btn-secondary" style="min-width:200px;max-width:100%;">Shop Extensions</a>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2" style="width:100%;max-width:480px;">
+      <a href="{% url 'booking:index' %}" class="btn btn-primary text-center" onclick="event.preventDefault(); Booking.open();">Book an Appointment</a>
+      <a href="{% url 'shop:index' %}"    class="btn btn-secondary text-center">Shop Extensions</a>
     </div>
 
   </div>
