@@ -1,9 +1,12 @@
+import logging
 from django.conf import settings
 from django.shortcuts import render
 from django.core.mail import send_mail
 from ..data import BRANDS
 from ..models import Review
 from .forms import CommunityForm
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -22,10 +25,10 @@ def home(request):
                     message=f'Name: {first} {last}\nEmail: {email}',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[settings.SALON_EMAIL],
-                    fail_silently=True,
+                    fail_silently=False,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error('Community form email failed: %s', e, exc_info=True)
             form = CommunityForm()
             success = True
 
