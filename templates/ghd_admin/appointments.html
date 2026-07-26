@@ -140,6 +140,7 @@
     </div>
 
     <div class="appt-badges">
+      {% if a.source == 'manual' %}<span class="badge" style="background:#f3f0ec;color:#7c6246;border:1px solid #d6c9b6;">Manual</span>{% endif %}
       <span class="badge badge-{{ a.status }}">{{ a.get_status_display }}</span>
       {% if a.payment_status != 'pending' %}
       <span class="badge badge-{{ a.payment_status }}">{{ a.get_payment_status_display }}</span>
@@ -193,6 +194,9 @@
                 placeholder="Notes…">{{ a.notes }}</textarea>
 
       <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveAppt({{ a.id }})">Save</button>
+      {% if a.source == 'manual' %}
+      <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deleteAppt({{ a.id }}, '{{ a.client_name|escapejs }}')">Delete</button>
+      {% endif %}
       <span id="saved-{{ a.id }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;">Saved</span>
     </div>
   </div>
@@ -221,15 +225,22 @@
       const el = document.getElementById('saved-' + id);
       el.style.opacity = '1';
       setTimeout(() => el.style.opacity = '0', 1800);
-      // Update badge
-      const badge = document.querySelector('#appt-' + id + ' .badge');
-      if (badge) {
+      const badge = document.querySelector('#appt-' + id + ' .badge.badge-' + status) ||
+                    document.querySelector('#appt-' + id + ' .badge[class*="badge-pending"], #appt-' + id + ' .badge[class*="badge-confirmed"], #appt-' + id + ' .badge[class*="badge-cancelled"]');
+      if (badge && !badge.textContent.includes('Manual')) {
         badge.className = 'badge badge-' + status;
-        badge.textContent = status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+        badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
       }
     } else {
       toast('Error saving', true);
     }
+  }
+
+  async function deleteAppt(id, name) {
+    if (!confirm('Delete appointment for ' + name + '? This cannot be undone.')) return;
+    const d = await admPost('/admin/api/appointments/' + id + '/delete/', {});
+    if (d.success) { toast('Appointment deleted'); document.getElementById('appt-' + id)?.remove(); }
+    else toast('Error deleting', true);
   }
 </script>
 {% endblock %}

@@ -662,8 +662,7 @@ img { display: block; max-width: 100%; }
 
 .bk-service-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: 0.85rem 0.75rem;
   border-bottom: 1px solid var(--color-tan);
   background: none;
@@ -678,6 +677,7 @@ img { display: block; max-width: 100%; }
 .bk-service-row:hover { background: var(--color-cream); }
 .bk-service-row.selected { background: var(--color-warm-beige); border-left: 3px solid var(--color-dark-brown); padding-left: calc(0.75rem - 3px); }
 
+.bk-service-row-main { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .bk-service-name {
   font-family: var(--font-serif);
   font-size: 0.95rem;
@@ -686,6 +686,28 @@ img { display: block; max-width: 100%; }
 .bk-service-meta { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .bk-service-duration { font-family: var(--font-sans); font-size: 0.68rem; color: var(--color-dark-brown); }
 .bk-service-price { font-family: var(--font-sans); font-size: 0.78rem; font-weight: 500; color: var(--color-dark); min-width: 70px; text-align: right; }
+
+.bk-desc-toggle {
+  background: none;
+  border: none;
+  font-size: 0.68rem;
+  font-family: var(--font-sans);
+  color: var(--color-brown);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  margin-top: 0.2rem;
+  text-align: left;
+}
+.bk-service-desc {
+  font-size: 0.8rem;
+  color: var(--color-mid);
+  line-height: 1.6;
+  padding: 0.5rem 0 0.1rem;
+  border-top: 1px solid var(--color-beige);
+  margin-top: 0.4rem;
+}
 
 /* ── Step 3: Add-ons ──────────────────────────────────────── */
 .bk-addon-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }

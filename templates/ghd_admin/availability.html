@@ -145,7 +145,7 @@
           {% if d.is_past %}av-cell-past{% elif d.is_blocked %}av-cell-blocked{% elif d.is_working %}av-cell-available{% else %}av-cell-closed{% endif %}
           {% if d.is_today %}av-cell-today{% endif %}"
          id="cell-{{ d.date|date:'Y-m-d' }}"
-         {% if not d.is_past %}onclick="toggleDay('{{ d.date|date:'Y-m-d' }}', this)"{% endif %}
+         {% if not d.is_past %}onclick="toggleDay('{{ d.date|date:'Y-m-d' }}', this); document.getElementById('ma-date').value='{{ d.date|date:'Y-m-d' }}';"{% endif %}
          title="{% if d.is_past %}Past{% elif d.is_blocked %}Blocked — click to unblock{% elif d.is_working %}Open — click to block{% else %}Closed (not a working day){% endif %}">
       <div class="av-cell-num">{{ d.day }}</div>
       {% if d.appt_count > 0 %}
@@ -162,15 +162,56 @@
   </div>
 
   <div class="av-legend">
-    <div class="av-leg-item"><div class="av-leg-dot" style="background:#dcfce7;border:1px solid #86efac;"></div> Open (click to block)</div>
+    <div class="av-leg-item"><div class="av-leg-dot" style="background:#dcfce7;border:1px solid #86efac;"></div> Open (click to block / pre-fill appointment date)</div>
     <div class="av-leg-item"><div class="av-leg-dot" style="background:#fee2e2;border:1px solid #fca5a5;"></div> Blocked (click to unblock)</div>
     <div class="av-leg-item"><div class="av-leg-dot" style="background:var(--beige);border:1px solid var(--tan);"></div> Closed (not a working day)</div>
     <div class="av-leg-item"><div class="av-leg-dot" style="background:var(--cream);"></div> Past</div>
   </div>
 </div>
 
+<!-- Add Manual Appointment -->
+<div class="adm-section-header" style="margin-top:1.5rem;">
+  <h2 style="font-size:0.9rem;font-weight:600;color:var(--dark);letter-spacing:0.04em;">Add Manual Appointment</h2>
+  <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="toggleManualForm()">+ Add Appointment</button>
+</div>
+
+<div class="adm-card" id="manual-appt-form" style="display:none;">
+  <div style="font-size:0.7rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--brown);margin-bottom:1.25rem;">New Appointment</div>
+  <div class="adm-field-row">
+    <div class="adm-field">
+      <label class="adm-label">Date *</label>
+      <input class="adm-input" type="date" id="ma-date" min="{{ today|date:'Y-m-d' }}" />
+    </div>
+    <div class="adm-field">
+      <label class="adm-label">Start Time *</label>
+      <input class="adm-input" type="time" id="ma-time" value="10:00" />
+    </div>
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Service</label>
+    <select class="adm-input" id="ma-service">
+      <option value="">— No specific service —</option>
+      {% for svc in services %}
+      <option value="{{ svc.id }}" data-duration="{{ svc.duration }}">{{ svc.name }} ({{ svc.duration }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Client Name</label>
+    <input class="adm-input" type="text" id="ma-client" placeholder="e.g. Walk-in, Phone booking…" />
+  </div>
+  <div class="adm-field">
+    <label class="adm-label">Notes</label>
+    <input class="adm-input" type="text" id="ma-notes" placeholder="Optional" />
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-top:0.75rem;">
+    <button class="adm-btn adm-btn-ghost adm-btn-sm" onclick="toggleManualForm()">Cancel</button>
+    <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="addManualAppointment()">Add Appointment</button>
+  </div>
+</div>
+
 <!-- Weekly hours -->
-<div class="adm-section-header">
+<div class="adm-section-header" style="margin-top:1.5rem;">
   <h2 style="font-size:0.9rem;font-weight:600;color:var(--dark);letter-spacing:0.04em;">Weekly Working Hours</h2>
   <span style="font-size:0.75rem;color:var(--mid);">Changes save automatically</span>
 </div>
@@ -214,13 +255,64 @@
       cell.title = 'Blocked — click to unblock';
       if (lbl) lbl.textContent = 'Blocked';
     } else {
-      // restore based on whether it's a working day — re-check via class names
       const wasWorking = !cell.classList.contains('av-cell-closed');
       cell.classList.add(wasWorking ? 'av-cell-available' : 'av-cell-closed');
       cell.title = wasWorking ? 'Open — click to block' : 'Closed (not a working day)';
       if (lbl) lbl.textContent = wasWorking ? 'Open' : 'Closed';
     }
     toast(d.blocked ? 'Day blocked' : 'Day unblocked');
+  }
+
+  function toggleManualForm() {
+    const form = document.getElementById('manual-appt-form');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    if (form.style.display === 'block') {
+      form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function prefillDate(dateStr) {
+    const form = document.getElementById('manual-appt-form');
+    document.getElementById('ma-date').value = dateStr;
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+    }
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  async function addManualAppointment() {
+    const date      = document.getElementById('ma-date').value;
+    const startTime = document.getElementById('ma-time').value;
+    const serviceId = document.getElementById('ma-service').value || null;
+    const client    = document.getElementById('ma-client').value.trim();
+    const notes     = document.getElementById('ma-notes').value.trim();
+
+    if (!date || !startTime) { toast('Date and time are required.', true); return; }
+
+    const d = await admPost('/admin/api/appointments/add-manual/', {
+      date, start_time: startTime, service_id: serviceId, client_name: client, notes
+    });
+    if (d.error) { toast(d.error, true); return; }
+
+    toast('Appointment added!');
+    // Update appt count dot on calendar cell
+    const cell = document.getElementById('cell-' + date);
+    if (cell) {
+      let dot = cell.querySelector('.av-appt-dot');
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.className = 'av-appt-dot';
+        cell.appendChild(dot);
+      }
+      const current = parseInt(dot.textContent) || 0;
+      const newCount = current + 1;
+      dot.textContent = newCount + ' appt' + (newCount !== 1 ? 's' : '');
+    }
+    // Reset form
+    document.getElementById('ma-date').value = '';
+    document.getElementById('ma-client').value = '';
+    document.getElementById('ma-notes').value = '';
+    document.getElementById('ma-service').value = '';
   }
 
   async function saveHours(dow) {

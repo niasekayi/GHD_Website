@@ -74,9 +74,12 @@ class Appointment(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
 
+    SOURCE_CHOICES = [('online', 'Online'), ('manual', 'Manual')]
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default='online')
+
     client_name = models.CharField(max_length=200)
-    client_email = models.EmailField()
-    client_phone = models.CharField(max_length=30)
+    client_email = models.EmailField(blank=True, default='')
+    client_phone = models.CharField(max_length=30, blank=True, default='')
     is_new_client = models.BooleanField(default=False)
 
     deposit_amount = models.DecimalField(max_digits=8, decimal_places=2)

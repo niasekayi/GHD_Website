@@ -115,6 +115,8 @@ def availability_view(request):
             'end':       ws.end_time.strftime('%H:%M') if ws and ws.end_time else '17:00',
         })
 
+    services = Service.objects.filter(is_active=True, is_addon=False).select_related('category').order_by('category__order', 'name')
+
     return render(request, 'ghd_admin/availability.html', {
         'year':            year,
         'month':           month,
@@ -129,6 +131,7 @@ def availability_view(request):
         'next_month':      next_month,
         'can_go_prev':     date(prev_year, prev_month, 1) >= date(today.year, today.month, 1),
         'today':           today,
+        'services':        services,
     })
 
 
@@ -324,6 +327,64 @@ def api_update_appointment(request, appt_id):
     if 'notes' in data:
         appt.notes = data['notes']
     appt.save()
+    return JsonResponse({'success': True})
+
+
+@_staff
+@require_POST
+def api_add_manual_appointment(request):
+    from datetime import datetime as dt, timedelta
+    data = json.loads(request.body)
+    date_str  = data.get('date', '')
+    start_str = data.get('start_time', '')
+    client_name = data.get('client_name', '').strip() or 'Manual Entry'
+    notes = data.get('notes', '').strip()
+    service_id = data.get('service_id') or None
+
+    try:
+        appt_date = date.fromisoformat(date_str)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid date.'}, status=400)
+
+    try:
+        h, m = map(int, start_str.split(':'))
+        start_time = dt_time(h, m)
+    except (ValueError, AttributeError):
+        return JsonResponse({'error': 'Invalid start time.'}, status=400)
+
+    service = None
+    duration_minutes = 60
+    if service_id:
+        try:
+            service = Service.objects.get(pk=int(service_id))
+            duration_minutes = service.duration_minutes
+        except Service.DoesNotExist:
+            pass
+
+    end_dt = dt.combine(appt_date, start_time) + timedelta(minutes=duration_minutes)
+    end_time = end_dt.time()
+
+    appt = Appointment.objects.create(
+        service=service,
+        date=appt_date,
+        start_time=start_time,
+        end_time=end_time,
+        client_name=client_name,
+        client_email='',
+        client_phone='',
+        deposit_amount=0,
+        status='confirmed',
+        notes=notes,
+        source='manual',
+    )
+    return JsonResponse({'success': True, 'id': appt.id})
+
+
+@_staff
+@require_POST
+def api_delete_appointment(request, appt_id):
+    appt = get_object_or_404(Appointment, pk=appt_id)
+    appt.delete()
     return JsonResponse({'success': True})
 
 

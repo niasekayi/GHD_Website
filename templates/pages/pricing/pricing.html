@@ -1,13 +1,186 @@
 {% extends "base.html" %}
-{% block title %}Pricing | Good Hair Daye{% endblock %}
+{% block title %}Services & Pricing | Good Hair Daye{% endblock %}
+{% block meta_description %}Browse Good Hair Daye salon services and pricing — silk presses, extensions, protective styles, and more. Book your appointment in Washington, D.C.{% endblock %}
 {% block nav_pricing %}active{% endblock %}
 
 {% block content %}
-<section class="section-py" style="background-color: var(--color-cream); min-height: 60vh;">
+<section class="section-py-sm" style="background-color: var(--color-cream);">
   <div class="container-site text-center">
     <p class="text-label mb-4" style="color: var(--color-brown);">Investment</p>
-    <h1 class="text-heading-xl mb-4">Pricing</h1>
-    <p class="text-body max-w-md mx-auto">Detailed pricing coming soon.</p>
+    <h1 class="text-heading-xl mb-4">Services & Pricing</h1>
+    <p class="text-body max-w-md mx-auto mb-8">
+      All services include a consultation. A ${{ deposit_amount }} deposit is required at booking and applied to your total.
+    </p>
   </div>
 </section>
+
+<section class="section-py" style="background-color: var(--color-white);">
+  <div class="container-site" style="max-width: 860px;">
+
+    {% for cat in categories %}
+    {% with main_services=cat.services.all %}
+    {% if main_services %}
+
+    <div class="pricing-category" style="margin-bottom: 3rem;">
+      <h2 class="text-heading-lg" style="margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-tan);">
+        {{ cat.name }}
+      </h2>
+
+      {% for svc in main_services %}
+      {% if svc.is_active %}
+      <div class="pricing-card" id="svc-{{ svc.id }}">
+        <div class="pricing-card-main">
+          <div class="pricing-card-info">
+            <h3 class="pricing-card-name">{{ svc.name }}</h3>
+            <div class="pricing-card-meta">
+              <span class="pricing-card-duration">{{ svc.duration }}</span>
+              {% if svc.id in gallery_service_ids %}
+              <a href="{% url 'pages:gallery' %}#gallery" class="pricing-gallery-link">View in Gallery →</a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="pricing-card-right">
+            <span class="pricing-card-price">{{ svc.price_display }}</span>
+            <div class="pricing-card-actions">
+              {% if svc.description %}
+              <button class="pricing-desc-toggle" onclick="toggleDesc({{ svc.id }})" aria-expanded="false">
+                Details <span class="pricing-desc-arrow">▾</span>
+              </button>
+              {% endif %}
+              <button class="btn btn-primary" style="font-size:0.75rem;padding:0.5rem 1.1rem;"
+                      onclick="Booking.open({{ svc.id }})">Book Now</button>
+            </div>
+          </div>
+        </div>
+        {% if svc.description %}
+        <div class="pricing-desc" id="desc-{{ svc.id }}" style="display:none;">
+          <p class="text-body" style="font-size:0.88rem; color: var(--color-mid); line-height:1.7;">{{ svc.description }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% endif %}
+    {% endwith %}
+    {% empty %}
+    <p class="text-body text-center" style="color: var(--color-mid);">Services coming soon.</p>
+    {% endfor %}
+
+    <!-- Deposit note -->
+    <div style="margin-top:2rem; padding:1.25rem 1.5rem; background:var(--color-cream); border-radius:4px; border:1px solid var(--color-tan);">
+      <p class="text-body" style="font-size:0.85rem; color:var(--color-mid);">
+        <strong style="color:var(--color-dark);">Deposit Policy:</strong>
+        A ${{ deposit_amount }} deposit is collected at booking via PayPal and applied toward your service total.
+        All appointments are subject to our <a href="{% url 'pages:cancellation' %}" style="color:var(--color-brown);">cancellation policy</a>.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .pricing-card {
+    border-bottom: 1px solid var(--color-beige);
+    padding: 1.1rem 0;
+  }
+  .pricing-card:last-of-type { border-bottom: none; }
+
+  .pricing-card-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .pricing-card-name {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--color-dark);
+    margin-bottom: 0.2rem;
+  }
+
+  .pricing-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .pricing-card-duration {
+    font-size: 0.75rem;
+    color: var(--color-mid);
+    letter-spacing: 0.04em;
+  }
+
+  .pricing-gallery-link {
+    font-size: 0.72rem;
+    color: var(--color-brown);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .pricing-gallery-link:hover { text-decoration: underline; }
+
+  .pricing-card-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .pricing-card-price {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    color: var(--color-dark);
+    white-space: nowrap;
+  }
+
+  .pricing-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pricing-desc-toggle {
+    background: none;
+    border: 1px solid var(--color-tan);
+    color: var(--color-mid);
+    font-size: 0.72rem;
+    font-family: var(--font-sans);
+    letter-spacing: 0.06em;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .pricing-desc-toggle:hover { border-color: var(--color-brown); color: var(--color-dark); }
+  .pricing-desc-toggle[aria-expanded="true"] .pricing-desc-arrow { display: inline-block; transform: rotate(180deg); }
+
+  .pricing-desc {
+    padding: 0.75rem 0 0.25rem;
+  }
+
+  @media (max-width: 580px) {
+    .pricing-card-main { flex-direction: column; gap: 0.75rem; }
+    .pricing-card-right { flex-direction: row; align-items: center; justify-content: space-between; width: 100%; }
+  }
+</style>
+
+<script>
+  function toggleDesc(id) {
+    const el = document.getElementById('desc-' + id);
+    const btn = document.querySelector('#svc-' + id + ' .pricing-desc-toggle');
+    const open = el.style.display === 'none';
+    el.style.display = open ? 'block' : 'none';
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+</script>
 {% endblock %}

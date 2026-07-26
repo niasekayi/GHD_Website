@@ -246,14 +246,19 @@ const Booking = (() => {
           html += `<p class="bk-cat-label">${escHtml(cat.category)}</p><div class="bk-service-list">`;
           for (const svc of mainServices) {
             const selected = state.selectedServiceId == svc.id ? 'selected' : '';
+            const descId = `bk-desc-${svc.id}`;
             html += `
-              <button class="bk-service-row ${selected}" onclick="Booking.selectService(${svc.id})">
-                <span class="bk-service-name">${escHtml(svc.name)}</span>
-                <span class="bk-service-meta">
-                  <span class="bk-service-duration">${escHtml(svc.duration)}</span>
-                  <span class="bk-service-price">${escHtml(svc.price)}</span>
-                </span>
-              </button>`;
+              <div class="bk-service-row ${selected}" onclick="Booking.selectService(${svc.id})">
+                <div class="bk-service-row-main">
+                  <span class="bk-service-name">${escHtml(svc.name)}</span>
+                  <span class="bk-service-meta">
+                    <span class="bk-service-duration">${escHtml(svc.duration)}</span>
+                    <span class="bk-service-price">${escHtml(svc.price)}</span>
+                  </span>
+                </div>
+                ${svc.description ? `<button class="bk-desc-toggle" onclick="event.stopPropagation(); Booking.toggleServiceDesc('${descId}', this)">Details ▾</button>
+                <div class="bk-service-desc" id="${descId}" style="display:none;">${escHtml(svc.description)}</div>` : ''}
+              </div>`;
           }
           html += `</div>`;
         }
@@ -270,6 +275,14 @@ const Booking = (() => {
       </div>`;
       container.innerHTML = html;
     });
+  }
+
+  function toggleServiceDesc(descId, btn) {
+    const el = document.getElementById(descId);
+    if (!el) return;
+    const open = el.style.display === 'none';
+    el.style.display = open ? 'block' : 'none';
+    btn.textContent = open ? 'Details ▴' : 'Details ▾';
   }
 
   function selectService(id) {
@@ -916,6 +929,7 @@ const Booking = (() => {
     selectTime,
     continueToReview,
     toggleAck,
+    toggleServiceDesc,
   };
 })();
 
