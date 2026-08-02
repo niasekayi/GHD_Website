@@ -680,7 +680,7 @@ const Booking = (() => {
     const remainingRow = remaining ? `
       <div class="bk-review-row">
         <span class="bk-review-label">Remaining Balance</span>
-        <span class="bk-review-value" style="color:var(--color-mid);font-size:0.9em;">$${escHtml(remaining)} upon arrival</span>
+        <span class="bk-review-value" style="color:var(--color-mid);font-size:0.9em;">${escHtml(remaining)} upon arrival</span>
       </div>` : '';
 
     container.innerHTML = `<div class="bk-step-content">
@@ -721,10 +721,10 @@ const Booking = (() => {
       </div>
 
       <div class="bk-deposit-note">
-        Your <strong>$${totalDeposit.toFixed(2)} deposit</strong> is paid securely via PayPal — your appointment is confirmed instantly once payment is complete.
+        Your <strong>$${totalDeposit.toFixed(2)} deposit</strong> is paid securely via Stripe — your appointment is confirmed instantly once payment is complete.
       </div>
       ${remaining ? `<div class="bk-arrival-note">
-        The remaining balance of <strong>$${escHtml(remaining)}</strong> is due upon arrival via <strong>Zelle, CashApp, or Venmo</strong>.
+        The remaining balance of <strong>${escHtml(remaining)}</strong> is due upon arrival via <strong>Zelle, CashApp, or Venmo</strong>.
       </div>` : ''}
 
       <div class="bk-cancellation-box">
