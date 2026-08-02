@@ -126,6 +126,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
 STRIPE_SECRET_KEY      = config('STRIPE_SECRET_KEY', default='')
 
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
+
 # ── Site URL (used for SEO canonical/OG tags, sitemap) ───────
 SITE_URL = config('SITE_URL', default='https://goodhairdaye.com')
 

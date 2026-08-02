@@ -1,4 +1,4 @@
-from django.core.mail import EmailMultiAlternatives
+import resend
 from django.template.loader import render_to_string
 from django.conf import settings
 
@@ -18,60 +18,53 @@ def _build_context(appointment):
     }
 
 
+def _send(*, to, subject, html, text):
+    resend.api_key = settings.RESEND_API_KEY
+    resend.Emails.send({
+        'from': f'Good Hair Daye <{settings.SALON_EMAIL}>',
+        'to': [to],
+        'subject': subject,
+        'html': html,
+        'text': text,
+    })
+
+
 def send_booking_confirmation(appointment):
     ctx = _build_context(appointment)
 
-    # ── Client confirmation ─────────────────────────────────
     client_subject = (
         f"Your appointment at Good Hair Daye is confirmed — "
         f"{appointment.date.strftime('%A, %B %d').replace(' 0', ' ')}"
     )
-    client_html = render_to_string('booking/email/confirmation_client.html', ctx)
-    client_txt = render_to_string('booking/email/confirmation_client.txt', ctx)
-
-    msg = EmailMultiAlternatives(
+    _send(
+        to=appointment.client_email,
         subject=client_subject,
-        body=client_txt,
-        from_email=f'Good Hair Daye <{settings.SALON_EMAIL}>',
-        to=[appointment.client_email],
+        html=render_to_string('booking/email/confirmation_client.html', ctx),
+        text=render_to_string('booking/email/confirmation_client.txt', ctx),
     )
-    msg.attach_alternative(client_html, 'text/html')
-    msg.send(fail_silently=False)
 
-    # ── Stylist notification ────────────────────────────────
     stylist_subject = (
         f"New Booking — {appointment.client_name} · "
         f"{ctx['service_name']} · "
         f"{appointment.date.strftime('%a %b %d').replace(' 0', ' ')}"
     )
-    stylist_html = render_to_string('booking/email/confirmation_stylist.html', ctx)
-    stylist_txt = render_to_string('booking/email/confirmation_stylist.txt', ctx)
-
-    msg2 = EmailMultiAlternatives(
+    _send(
+        to=settings.SALON_EMAIL,
         subject=stylist_subject,
-        body=stylist_txt,
-        from_email=f'Good Hair Daye Booking <{settings.SALON_EMAIL}>',
-        to=[settings.SALON_EMAIL],
+        html=render_to_string('booking/email/confirmation_stylist.html', ctx),
+        text=render_to_string('booking/email/confirmation_stylist.txt', ctx),
     )
-    msg2.attach_alternative(stylist_html, 'text/html')
-    msg2.send(fail_silently=False)
 
 
 def send_reminder_email(appointment):
     ctx = _build_context(appointment)
-
     subject = (
         f"Reminder: Your appointment is tomorrow — "
         f"{ctx['service_name']} at {ctx['time']}"
     )
-    html = render_to_string('booking/email/reminder_client.html', ctx)
-    txt = render_to_string('booking/email/reminder_client.txt', ctx)
-
-    msg = EmailMultiAlternatives(
+    _send(
+        to=appointment.client_email,
         subject=subject,
-        body=txt,
-        from_email=f'Good Hair Daye <{settings.SALON_EMAIL}>',
-        to=[appointment.client_email],
+        html=render_to_string('booking/email/reminder_client.html', ctx),
+        text=render_to_string('booking/email/reminder_client.txt', ctx),
     )
-    msg.attach_alternative(html, 'text/html')
-    msg.send(fail_silently=False)
