@@ -78,9 +78,11 @@ def api_availability(request):
     else:
         end_date = date(today.year, today.month, last_day_current)
         nm_opens = date(today.year, today.month, 18)
+        _nm = 1 if today.month == 12 else today.month + 1
+        _ny = today.year + 1 if today.month == 12 else today.year
         next_month_note = (
             f'Bookings for next month open on the 18th of each month. '
-            f'Come back on {nm_opens.strftime("%B 18th")} to book for {nm_opens.strftime("%B")}.'
+            f'Come back on {nm_opens.strftime("%B 18th")} to book for {date(_ny, _nm, 1).strftime("%B")}.'
         )
 
     # Work schedule indexed by day_of_week
