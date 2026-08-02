@@ -18,10 +18,13 @@ def _build_context(appointment):
     }
 
 
+RESEND_FROM = 'Good Hair Daye <info@goodhairdaye.com>'
+
+
 def _send(*, to, subject, html, text):
     resend.api_key = settings.RESEND_API_KEY
     resend.Emails.send({
-        'from': f'Good Hair Daye <{settings.SALON_EMAIL}>',
+        'from': RESEND_FROM,
         'to': [to],
         'subject': subject,
         'html': html,
