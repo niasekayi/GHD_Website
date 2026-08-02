@@ -8,11 +8,9 @@ Your appointment at Good Hair Daye is confirmed!
   Service:  {{ service_name }}
   Date:     {{ date }}
   Time:     {{ time }}
-  Deposit:  ${{ total_deposit }}
+  Deposit Paid: ${{ total_deposit }} ✓
 
-PAYMENT REQUIRED WITHIN 24 HOURS
-Please send ${{ total_deposit }} via Venmo, CashApp, or Zelle to confirm your
-spot. Your appointment is not guaranteed until the deposit is received.
+Your remaining balance is due upon arrival via Zelle, CashApp, or Venmo.
 
 LOCATION
 Good Hair Daye
