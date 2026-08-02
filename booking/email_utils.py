@@ -25,7 +25,7 @@ def _send(*, to, subject, html, text):
     resend.api_key = settings.RESEND_API_KEY
     resend.Emails.send({
         'from': RESEND_FROM,
-        'to': [to],
+        'to': to if isinstance(to, list) else [to],
         'subject': subject,
         'html': html,
         'text': text,
@@ -51,8 +51,9 @@ def send_booking_confirmation(appointment):
         f"{ctx['service_name']} · "
         f"{appointment.date.strftime('%a %b %d').replace(' 0', ' ')}"
     )
+    stylist_recipients = list({settings.SALON_EMAIL, 'info@goodhairdaye.com'})
     _send(
-        to=settings.SALON_EMAIL,
+        to=stylist_recipients,
         subject=stylist_subject,
         html=render_to_string('booking/email/confirmation_stylist.html', ctx),
         text=render_to_string('booking/email/confirmation_stylist.txt', ctx),
