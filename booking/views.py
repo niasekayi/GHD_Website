@@ -7,8 +7,8 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET, require_POST
 
+import stripe
 from services.models import ServiceCategory, Service
-from goodhairdaye.paypal_utils import _paypal_access_token, _paypal_post
 from .models import BookingSettings, WorkSchedule, BlockedDate, Appointment
 
 
@@ -156,41 +156,23 @@ def api_availability(request):
 
 
 @require_POST
-def api_create_paypal_order(request):
-    """Create a PayPal order for the deposit amount. Returns {order_id}."""
-    if not settings.PAYPAL_CLIENT_ID or not settings.PAYPAL_SECRET:
+def api_create_payment_intent(request):
+    if not settings.STRIPE_SECRET_KEY:
         return JsonResponse({'error': 'Payment is not configured yet. Please contact us to book.'}, status=503)
     try:
         data = json.loads(request.body)
         amount = float(data.get('amount', 0))
         description = data.get('description', 'Hair Appointment Deposit — Good Hair Daye')
-
         if amount <= 0:
             return JsonResponse({'error': 'Invalid deposit amount.'}, status=400)
-
-        token = _paypal_access_token()
-        status_code, order = _paypal_post(
-            '/v2/checkout/orders',
-            token,
-            {
-                'intent': 'CAPTURE',
-                'purchase_units': [{
-                    'amount': {'currency_code': 'USD', 'value': f'{amount:.2f}'},
-                    'description': description,
-                }],
-                'application_context': {
-                    'brand_name': 'Good Hair Daye',
-                    'user_action': 'PAY_NOW',
-                    'shipping_preference': 'NO_SHIPPING',
-                },
-            },
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        intent = stripe.PaymentIntent.create(
+            amount=int(round(amount * 100)),
+            currency='usd',
+            description=description,
+            metadata={'source': 'goodhairdaye_booking'},
         )
-
-        if status_code != 201 or 'id' not in order:
-            return JsonResponse({'error': 'Could not create payment order. Please try again.'}, status=502)
-
-        return JsonResponse({'order_id': order['id']})
-
+        return JsonResponse({'client_secret': intent.client_secret})
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid request.'}, status=400)
     except Exception as e:
@@ -212,13 +194,13 @@ def api_book(request):
         cancellation_acknowledged = bool(data.get('cancellation_acknowledged', False))
         notes = data.get('notes', '').strip()
         addon_ids = data.get('addon_ids', [])
-        paypal_order_id = data.get('paypal_order_id', '').strip()
+        stripe_payment_intent_id = data.get('stripe_payment_intent_id', '').strip()
 
         if not all([date_str, time_str, client_name, client_email, client_phone]):
             return JsonResponse({'error': 'Please fill in all required fields.'}, status=400)
         if not cancellation_acknowledged:
             return JsonResponse({'error': 'Please acknowledge the cancellation policy.'}, status=400)
-        if not paypal_order_id:
+        if not stripe_payment_intent_id:
             return JsonResponse({'error': 'Payment is required to complete your booking.'}, status=400)
 
         try:
@@ -265,21 +247,18 @@ def api_book(request):
                 status=409,
             )
 
-        # Capture the PayPal payment — appointment is only created on success
+        # Verify Stripe payment succeeded before creating appointment
         try:
-            token = _paypal_access_token()
-            capture_status, capture_data = _paypal_post(
-                f'/v2/checkout/orders/{paypal_order_id}/capture',
-                token,
-            )
-            if capture_status not in (200, 201) or capture_data.get('status') != 'COMPLETED':
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            intent = stripe.PaymentIntent.retrieve(stripe_payment_intent_id)
+            if intent.status != 'succeeded':
                 return JsonResponse(
-                    {'error': 'Payment could not be completed. Please try again.'},
+                    {'error': 'Payment not completed. Please try again.'},
                     status=402,
                 )
         except Exception:
             return JsonResponse(
-                {'error': 'Payment processing error. Please try again or contact us.'},
+                {'error': 'Payment verification failed. Please contact us.'},
                 status=500,
             )
 
@@ -300,7 +279,7 @@ def api_book(request):
             cancellation_acknowledged=cancellation_acknowledged,
             notes=notes,
             addons_display=', '.join(addon_names),
-            paypal_order_id=paypal_order_id,
+            paypal_order_id=stripe_payment_intent_id,
             payment_status='paid',
             status='confirmed',
         )

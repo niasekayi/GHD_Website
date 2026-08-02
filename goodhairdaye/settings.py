@@ -122,11 +122,9 @@ TWILIO_FROM_NUMBER  = config('TWILIO_FROM_NUMBER', default='')
 # Session cookie expires when the browser is closed (no persistent login).
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
-# ── PayPal ──────────────────────────────────────────────────
-# PAYPAL_MODE: 'sandbox' for testing, 'live' for real payments.
-PAYPAL_MODE      = config('PAYPAL_MODE', default='sandbox')
-PAYPAL_CLIENT_ID = config('PAYPAL_CLIENT_ID', default='')
-PAYPAL_SECRET    = config('PAYPAL_SECRET', default='')
+# ── Stripe ──────────────────────────────────────────────────
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY', default='')
+STRIPE_SECRET_KEY      = config('STRIPE_SECRET_KEY', default='')
 
 # ── Site URL (used for SEO canonical/OG tags, sitemap) ───────
 SITE_URL = config('SITE_URL', default='https://goodhairdaye.com')

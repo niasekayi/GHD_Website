@@ -9,8 +9,7 @@ def site_settings(request):
         active_banner = None
 
     return {
-        'PAYPAL_CLIENT_ID': settings.PAYPAL_CLIENT_ID,
-        'PAYPAL_MODE': settings.PAYPAL_MODE,
+        'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY,
         'active_banner': active_banner,
         'SITE_URL': settings.SITE_URL,
     }

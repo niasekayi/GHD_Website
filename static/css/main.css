@@ -1221,6 +1221,22 @@ img { display: block; max-width: 100%; }
 }
 .bk-btn-ghost:hover { color: var(--color-dark); }
 
+.bk-card-element {
+  border: 1px solid var(--color-tan);
+  border-radius: 3px;
+  padding: 0.75rem 1rem;
+  background: var(--color-white);
+  transition: border-color 0.15s;
+}
+.bk-card-element.StripeElement--focus { border-color: var(--color-brown); }
+.bk-card-element.StripeElement--invalid { border-color: #b91c1c; }
+.bk-card-error {
+  font-size: 0.78rem;
+  color: #b91c1c;
+  min-height: 1.2em;
+  margin-top: 0.4rem;
+}
+
 .bk-paypal-hint {
   font-family: var(--font-sans);
   font-size: 0.78rem;

@@ -742,78 +742,122 @@ const Booking = (() => {
         <button class="bk-btn-ghost" onclick="Booking.goTo(6)">← Back</button>
       </div>
 
-      <div id="bk-paypal-hint" class="bk-paypal-hint" style="${state.cancellationAcknowledged ? 'display:none;' : ''}">
+      <div id="bk-stripe-hint" style="font-size:0.8rem;color:var(--color-mid);padding:0.5rem 0;${state.cancellationAcknowledged ? 'display:none;' : ''}">
         Please acknowledge the cancellation policy above to continue with payment.
       </div>
-      <div id="bk-paypal-btn-container" style="${state.cancellationAcknowledged ? '' : 'display:none;'}"></div>
+      <div id="bk-stripe-payment" style="${state.cancellationAcknowledged ? '' : 'display:none;'}">
+        <div id="bk-card-element" class="bk-card-element"></div>
+        <div id="bk-card-error" class="bk-card-error"></div>
+        <button id="bk-pay-btn" class="bk-btn-primary" style="width:100%;margin-top:1rem;">
+          Pay $${totalDeposit.toFixed(2)} to Confirm
+        </button>
+      </div>
     </div>`;
 
+    state.currentDepositAmount = totalDeposit;
+    state.currentServiceName = svc ? svc.name : 'Good Hair Daye';
     if (state.cancellationAcknowledged) {
-      _mountPayPalButtons(totalDeposit, svc.name);
+      _mountStripeCard();
     }
   }
 
   function toggleAck(checked) {
     state.cancellationAcknowledged = checked;
-    const hint = document.getElementById('bk-paypal-hint');
-    const btnContainer = document.getElementById('bk-paypal-btn-container');
-    if (!hint || !btnContainer) return;
+    const hint = document.getElementById('bk-stripe-hint');
+    const payment = document.getElementById('bk-stripe-payment');
+    if (!hint || !payment) return;
     if (checked) {
       hint.style.display = 'none';
-      btnContainer.style.display = '';
-      if (!btnContainer.hasChildNodes()) {
-        _mountPayPalButtons(state.currentDepositAmount || 40, '');
-      }
+      payment.style.display = '';
+      _mountStripeCard();
     } else {
       hint.style.display = '';
-      btnContainer.style.display = 'none';
+      payment.style.display = 'none';
     }
   }
 
-  function _mountPayPalButtons(totalDeposit, serviceName) {
-    const container = document.getElementById('bk-paypal-btn-container');
-    if (!container) return;
+  let _stripeInstance = null;
+  let _stripeCard = null;
 
-    if (!window.paypal) {
-      container.innerHTML = '<p style="color:var(--color-dark);font-size:0.8rem;padding:0.5rem 0;">PayPal failed to load. Please refresh the page and try again.</p>';
+  function _mountStripeCard() {
+    const cardEl = document.getElementById('bk-card-element');
+    if (!cardEl) return;
+    if (cardEl.children.length > 0) {
+      // Already mounted — just re-attach the pay button handler
+      _attachPayBtn();
       return;
     }
-
-    container.innerHTML = '';
-
-    window.paypal.Buttons({
-      style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay', height: 45 },
-
-      createOrder() {
-        const errEl = document.getElementById('bk-review-error');
-        if (errEl) errEl.style.display = 'none';
-        const desc = `Hair Appointment Deposit — ${serviceName || 'Good Hair Daye'}`;
-        return fetch('/book/api/create-paypal-order/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
-          body: JSON.stringify({ amount: totalDeposit.toFixed(2), description: desc }),
-        })
-          .then(r => r.json())
-          .then(d => {
-            if (d.error) throw new Error(d.error);
-            return d.order_id;
-          });
+    if (!window.Stripe || !window.STRIPE_PK) {
+      cardEl.innerHTML = '<p style="color:var(--color-mid);font-size:0.8rem;padding:0.5rem 0;">Payment form failed to load. Please refresh the page.</p>';
+      return;
+    }
+    _stripeInstance = Stripe(window.STRIPE_PK);
+    const elements = _stripeInstance.elements();
+    _stripeCard = elements.create('card', {
+      hidePostalCode: true,
+      style: {
+        base: {
+          fontSize: '15px',
+          color: '#3a2218',
+          '::placeholder': { color: '#b8a898' },
+        },
+        invalid: { color: '#b91c1c' },
       },
+    });
+    _stripeCard.mount('#bk-card-element');
+    _stripeCard.on('change', function(e) {
+      const errEl = document.getElementById('bk-card-error');
+      if (errEl) errEl.textContent = e.error ? e.error.message : '';
+    });
+    _attachPayBtn();
+  }
 
-      onApprove(data) {
-        return _completeBooking(data.orderID);
-      },
+  function _attachPayBtn() {
+    const btn = document.getElementById('bk-pay-btn');
+    if (!btn || btn._stripeAttached) return;
+    btn._stripeAttached = true;
+    btn.addEventListener('click', _handleStripePayment);
+  }
 
-      onError(err) {
-        const errEl = document.getElementById('bk-review-error');
-        if (errEl) { errEl.textContent = 'Payment failed. Please try again or use a different payment method.'; errEl.style.display = 'block'; }
-      },
+  async function _handleStripePayment() {
+    const btn = document.getElementById('bk-pay-btn');
+    const errEl = document.getElementById('bk-card-error');
+    if (!btn || !_stripeInstance || !_stripeCard) return;
 
-      onCancel() {
-        const errEl = document.getElementById('bk-review-error');
-        if (errEl) { errEl.textContent = 'Payment cancelled — your appointment has not been booked. You can try again whenever you\'re ready.'; errEl.style.display = 'block'; }
-      },
-    }).render('#bk-paypal-btn-container');
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
+    if (errEl) errEl.textContent = '';
+
+    try {
+      const desc = `Hair Appointment Deposit — ${state.currentServiceName || 'Good Hair Daye'}`;
+      const res = await fetch('/book/api/create-payment-intent/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+        body: JSON.stringify({ amount: (state.currentDepositAmount || 40).toFixed(2), description: desc }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const { paymentIntent, error } = await _stripeInstance.confirmCardPayment(
+        data.client_secret,
+        { payment_method: { card: _stripeCard } },
+      );
+
+      if (error) {
+        if (errEl) errEl.textContent = error.message;
+        btn.disabled = false;
+        btn.textContent = `Pay $${(state.currentDepositAmount || 40).toFixed(2)} to Confirm`;
+        return;
+      }
+
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        await _completeBooking(paymentIntent.id);
+      }
+    } catch (e) {
+      if (errEl) errEl.textContent = e.message || 'Payment failed. Please try again.';
+      btn.disabled = false;
+      btn.textContent = `Pay $${(state.currentDepositAmount || 40).toFixed(2)} to Confirm`;
+    }
   }
 
   async function _completeBooking(paypalOrderId) {
@@ -836,7 +880,7 @@ const Booking = (() => {
           client_phone: state.clientPhone,
           notes: state.clientNotes,
           cancellation_acknowledged: true,
-          paypal_order_id: paypalOrderId,
+          stripe_payment_intent_id: paypalOrderId,
         }),
       });
       const data = await res.json();

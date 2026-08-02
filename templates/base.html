@@ -32,7 +32,8 @@
     "name": "Good Hair Daye",
     "description": "Washington D.C. boutique hair salon specializing in healthy hair, silk presses, and premium extension installation for all hair textures.",
     "url": "{{ SITE_URL }}",
-    "email": "Goodhair.daye@yahoo.com",
+    "email": "info@goodhairdaye.com",
+    "telephone": "+12025034715",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "470 L'Enfant Plaza Center, Unit 429",
@@ -53,7 +54,9 @@
     "priceRange": "$$",
     "sameAs": [
       "https://instagram.com/goodhairdaye_dc",
-      "https://www.tiktok.com/@good.hair.daye"
+      "https://www.tiktok.com/@good.hair.daye",
+      "https://www.yelp.com/biz/good-hair-daye-extension-bar-and-salon-washington",
+      "https://share.google/deO0rdpkD7Z1v6Kwh"
     ],
     "image": "{{ SITE_URL }}{% static 'images/logo.png' %}"
   }
@@ -93,9 +96,10 @@
   <link rel="stylesheet" href="{% static 'css/main.css' %}?v=27" />
   {% block extra_head %}{% endblock %}
 
-  <!-- PayPal JS SDK -->
-  {% if PAYPAL_CLIENT_ID %}
-  <script src="https://www.paypal.com/sdk/js?client-id={{ PAYPAL_CLIENT_ID }}&currency=USD&intent=capture" data-namespace="paypal"></script>
+  <!-- Stripe JS -->
+  {% if STRIPE_PUBLISHABLE_KEY %}
+  <script src="https://js.stripe.com/v3/"></script>
+  <script>window.STRIPE_PK = '{{ STRIPE_PUBLISHABLE_KEY }}';</script>
   {% endif %}
 </head>
 <body>
