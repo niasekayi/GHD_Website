@@ -720,10 +720,7 @@ const Booking = (() => {
         ${remainingRow}
       </div>
 
-      <div class="bk-deposit-note">
-        Your <strong>$${totalDeposit.toFixed(2)} deposit</strong> is paid securely via Stripe — your appointment is confirmed instantly once payment is complete.
-      </div>
-      ${remaining ? `<div class="bk-arrival-note">
+${remaining ? `<div class="bk-arrival-note">
         The remaining balance of <strong>${escHtml(remaining)}</strong> is due upon arrival via <strong>Zelle, CashApp, or Venmo</strong>.
       </div>` : ''}
 
@@ -946,10 +943,7 @@ const Booking = (() => {
           ${remainingLine}
         </div>
 
-        <div class="bk-deposit-note">
-          A payment link for your <strong>$${totalDeposit.toFixed(2)} deposit</strong> has been sent to <strong>${escHtml(state.clientEmail)}</strong>. Please complete your payment within 24 hours to secure your appointment.
-        </div>
-        ${remaining ? `<div class="bk-arrival-note">
+${remaining ? `<div class="bk-arrival-note">
           Your remaining balance of <strong>${escHtml(remaining)}</strong> is due upon arrival via <strong>Zelle, CashApp, or Venmo</strong>.
         </div>` : ''}
 

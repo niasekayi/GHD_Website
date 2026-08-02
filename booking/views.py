@@ -1,5 +1,6 @@
 import json
 import calendar
+import threading
 from datetime import date, time, datetime, timedelta
 
 from django.conf import settings
@@ -276,16 +277,14 @@ def api_book(request):
             status='confirmed',
         )
 
-        try:
-            from .email_utils import send_booking_confirmation
-            send_booking_confirmation(appt)
-        except Exception:
-            pass
-        try:
-            from .sms_utils import send_booking_sms
-            send_booking_sms(appt)
-        except Exception:
-            pass
+        def _send_notifications(a):
+            try:
+                from .email_utils import send_booking_confirmation
+                send_booking_confirmation(a)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error('Booking confirmation email failed: %s', e, exc_info=True)
+        threading.Thread(target=_send_notifications, args=(appt,), daemon=True).start()
 
         return JsonResponse({
             'success': True,

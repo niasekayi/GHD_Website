@@ -36,7 +36,7 @@ def send_booking_confirmation(appointment):
         to=[appointment.client_email],
     )
     msg.attach_alternative(client_html, 'text/html')
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
 
     # ── Stylist notification ────────────────────────────────
     stylist_subject = (
@@ -54,7 +54,7 @@ def send_booking_confirmation(appointment):
         to=[settings.SALON_EMAIL],
     )
     msg2.attach_alternative(stylist_html, 'text/html')
-    msg2.send(fail_silently=True)
+    msg2.send(fail_silently=False)
 
 
 def send_reminder_email(appointment):
@@ -74,4 +74,4 @@ def send_reminder_email(appointment):
         to=[appointment.client_email],
     )
     msg.attach_alternative(html, 'text/html')
-    msg.send(fail_silently=True)
+    msg.send(fail_silently=False)
