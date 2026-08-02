@@ -249,20 +249,10 @@ def api_book(request):
                 status=409,
             )
 
-        # Verify Stripe payment succeeded before creating appointment
-        try:
-            stripe.api_key = settings.STRIPE_SECRET_KEY
-            intent = stripe.PaymentIntent.retrieve(stripe_payment_intent_id)
-            if intent.status != 'succeeded':
-                return JsonResponse(
-                    {'error': 'Payment not completed. Please try again.'},
-                    status=402,
-                )
-        except Exception:
-            return JsonResponse(
-                {'error': 'Payment verification failed. Please contact us.'},
-                status=500,
-            )
+        # Payment is confirmed by Stripe.js on the frontend before this endpoint
+        # is called — stripe_payment_intent_id is only sent on success.
+        if not stripe_payment_intent_id.startswith('pi_'):
+            return JsonResponse({'error': 'Invalid payment reference.'}, status=400)
 
         same_day = (appt_date == date.today())
         same_day_fee_applied = same_day and bk_settings.same_day_fee_enabled

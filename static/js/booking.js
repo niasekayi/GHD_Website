@@ -893,7 +893,7 @@ const Booking = (() => {
         if (container) container.innerHTML = '';
       }
     } catch (e) {
-      if (errEl) { errEl.textContent = 'Network error after payment. Please contact us with your PayPal confirmation to verify your booking.'; errEl.style.display = 'block'; }
+      if (errEl) { errEl.textContent = 'Network error after payment. Please contact us with your payment confirmation to verify your booking.'; errEl.style.display = 'block'; }
       if (container) container.innerHTML = '';
     }
   }
