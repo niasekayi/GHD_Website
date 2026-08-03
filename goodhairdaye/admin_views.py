@@ -19,9 +19,9 @@ from goodhairdaye.admin_common import _staff, LOGIN_URL
 @_staff
 def dashboard(request):
     today = date.today()
-    today_count   = Appointment.objects.filter(date=today, status__in=['pending', 'confirmed']).count()
-    week_count    = Appointment.objects.filter(date__gte=today, date__lte=today + timedelta(days=7), status__in=['pending', 'confirmed']).count()
-    pending_count = Appointment.objects.filter(status='pending').count()
+    today_count = Appointment.objects.filter(date=today, status__in=['pending', 'confirmed']).count()
+    week_count  = Appointment.objects.filter(date__gte=today, date__lte=today + timedelta(days=7), status__in=['pending', 'confirmed']).count()
+    all_count   = Appointment.objects.count()
 
     return render(request, 'ghd_admin/dashboard.html', {
         'today': today,
@@ -33,12 +33,11 @@ def dashboard(request):
             date__lte=today + timedelta(days=7),
             status__in=['pending', 'confirmed'],
         ).order_by('date', 'start_time')[:8],
-        'pending_count': pending_count,
-        'week_count':    week_count,
+        'week_count': week_count,
         'stats': [
-            ('Today', today_count,   '/admin/appointments/?filter=today'),
+            ('Today', today_count, '/admin/appointments/?filter=today'),
             ('This Week', week_count, '/admin/appointments/'),
-            ('Pending', pending_count, '/admin/appointments/?filter=all'),
+            ('All', all_count, '/admin/appointments/?filter=all'),
         ],
     })
 

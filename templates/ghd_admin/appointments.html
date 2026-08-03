@@ -194,9 +194,7 @@
                 placeholder="Notes…">{{ a.notes }}</textarea>
 
       <button class="adm-btn adm-btn-primary adm-btn-sm" onclick="saveAppt({{ a.id }})">Save</button>
-      {% if a.source == 'manual' %}
       <button class="adm-btn adm-btn-ghost adm-btn-sm" style="color:#b45309;" onclick="deleteAppt({{ a.id }}, '{{ a.client_name|escapejs }}')">Delete</button>
-      {% endif %}
       <span id="saved-{{ a.id }}" style="font-size:0.72rem;color:#2e7d32;opacity:0;transition:opacity 0.3s;">Saved</span>
     </div>
   </div>
